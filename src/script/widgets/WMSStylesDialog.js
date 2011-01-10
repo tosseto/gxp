@@ -73,6 +73,12 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
      */
     symbolType: null,
     
+    /** api: property[fonts]
+     * 
+     * @type 
+     */
+    fonts: null,    
+    
     /** api: property[stylesStore]
      *  ``Ext.data.Store`` A store representing the styles returned from
      *  GetCapabilities and GetStyles. It has "name", "title", "abstract",
@@ -479,6 +485,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
                 xtype: "gx_rulepanel",
                 symbolType: this.symbolType,
                 rule: rule,
+                fonts: this.fonts,                 
                 attributes: new GeoExt.data.AttributeStore({
                     url: wfsUrl
                 }),
