@@ -38,7 +38,7 @@ Ext.namespace("gxp");
 gxp.LinkEmbedMapDialog = Ext.extend(gxp.EmbedMapDialog, {
     
 
-	linkMessage: 'Use this URL to link to your map:',
+	linkMessage: 'Paste link in email or IM',
 	linkUrl : '',
 	linkBox : null,
     
