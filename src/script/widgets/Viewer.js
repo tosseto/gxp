@@ -353,7 +353,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
                 ],
                 maxExtent: mapConfig.maxExtent && OpenLayers.Bounds.fromArray(mapConfig.maxExtent),
                 restrictedExtent: mapConfig.restrictedExtent && OpenLayers.Bounds.fromArray(mapConfig.restrictedExtent),
-                numZoomLevels: mapConfig.numZoomLevels || 20
+                numZoomLevels: 22
             }, mapConfig),
             center: config.center && new OpenLayers.LonLat(config.center[0], config.center[1]),
             layers: null,
@@ -459,9 +459,11 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             // sort background records so visible layers are first
             // this is largely a workaround for an OpenLayers Google Layer issue
             // http://trac.openlayers.org/ticket/2661
-            baseRecords.sort(function(a, b) {
-                return a.getLayer().visibility < b.getLayer().visibility;
-            });
+            //Causes max zoom issues, comment out
+//            baseRecords.sort(function(a, b) {
+//                return a.get("layer").visibility < b.get("layer").visibility;
+//            });
+
             
             var panel = this.mapPanel;
             var map = panel.map;

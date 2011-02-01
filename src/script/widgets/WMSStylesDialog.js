@@ -77,7 +77,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
      * 
      * @type 
      */
-    fonts: null,    
+    fonts: null,
     
     /** api: property[stylesStore]
      *  ``Ext.data.Store`` A store representing the styles returned from
@@ -483,6 +483,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
             modal: true,
             items: [{
                 xtype: "gxp_rulepanel",
+                fonts: this.fonts,
                 symbolType: this.symbolType,
                 rule: rule,
                 fonts: this.fonts,                 
