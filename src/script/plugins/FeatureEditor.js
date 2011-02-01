@@ -28,20 +28,30 @@ Ext.namespace("gxp.plugins");
  */   
 gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gx_featureeditor */
-    ptype: "gx_featureeditor",
+    /** api: ptype = gxp_featureeditor */
+    ptype: "gxp_featureeditor",
 
     /** api: config[createFeatureActionTip]
-     * ``String``
-     * Tooltip string for create new feature action (i18n).
+     *  ``String``
+     *  Tooltip string for create new feature action (i18n).
      */
     createFeatureActionTip: "Create a new feature",
+
+    /** api: config[createFeatureActionText]
+     *  ``String``
+     *  Create new feature text.
+     */
     
     /** api: config[editFeatureActionTip]
      *  ``String``
-     * Tooltip string for edit existing feature action (i18n).
+     *  Tooltip string for edit existing feature action (i18n).
      */
     editFeatureActionTip: "Edit existing feature",
+
+    /** api: config[editFeatureActionText]
+     *  ``String``
+     *  Modify feature text.
+     */
 
     /** api: config[featureManager]
      *  ``String`` The id of the :class:`gxp.plugins.FeatureManager` to use
@@ -78,6 +88,14 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
      */
     showSelectedOnly: true,
     
+    /** api: config[fields]
+     *  ``Array``
+     *  List of field config names corresponding to feature attributes.  If
+     *  not provided, fields will be derived from attributes. If provided,
+     *  the field order from this list will be used, and fields missing in the
+     *  list will be excluded.
+     */
+
     /** api: config[excludeFields]
      *  ``Array`` Optional list of field names (case sensitive) that are to be
      *  excluded from the property grid of the FeatureEditPopup.
@@ -140,6 +158,10 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
                         unregisterDoIt.call(this);
                         if (fn === "setLayer") {
                             this.target.selectLayer(fnArgs[0]);
+                        } else if (fn === "clearFeatures") {
+                            // nothing asynchronous involved here, so let's
+                            // finish the caller first before we do anything.
+                            window.setTimeout(function() {mgr[fn].call(mgr);});
                         } else {
                             mgr[fn].apply(mgr, fnArgs);
                         }
@@ -163,6 +185,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
             "beforequery": intercept.createDelegate(this, "loadFeatures", 1),
             "beforelayerchange": intercept.createDelegate(this, "setLayer", 1),
             "beforesetpage": intercept.createDelegate(this, "setPage", 1),
+            "beforeclearfeatures": intercept.createDelegate(this, "clearFeatures", 1),
             scope: this
         });
         
@@ -262,6 +285,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
                         feature: feature,
                         vertexRenderIntent: "vertex",
                         readOnly: this.readOnly,
+                        fields: this.fields,
                         excludeFields: this.excludeFields,
                         editing: feature.state === OpenLayers.State.INSERT,
                         schema: this.schema,
@@ -339,7 +363,8 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
         var toggleGroup = this.toggleGroup || Ext.id();
         var actions = gxp.plugins.FeatureEditor.superclass.addActions.call(this, [new GeoExt.Action({
             tooltip: this.createFeatureActionTip,
-            iconCls: "gx-icon-addfeature",
+            text: this.createFeatureActionText,
+            iconCls: "gxp-icon-addfeature",
             disabled: true,
             hidden: this.readOnly,
             toggleGroup: toggleGroup,
@@ -350,7 +375,8 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
             map: this.target.mapPanel.map
         }), new GeoExt.Action({
             tooltip: this.editFeatureActionTip,
-            iconCls: "gx-icon-editfeature",
+            text: this.editFeatureActionText,
+            iconCls: "gxp-icon-editfeature",
             disabled: true,
             toggleGroup: toggleGroup,
             enableToggle: true,
@@ -369,25 +395,50 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
      *  :arg evt: ``Object``
      */
     noFeatureClick: function(evt) {
+        var evtLL = this.target.mapPanel.map.getLonLatFromPixel(evt.xy);
         var featureManager = this.target.tools[this.featureManager];
-        var size = this.target.mapPanel.map.getSize();
-        var layer = this.target.selectedLayer.getLayer();
+        var page = featureManager.page;
+        if (featureManager.visible() == "all" && featureManager.paging && page && page.extent.containsLonLat(evtLL)) {
+            // no need to load a different page if the clicked location is
+            // inside the current page bounds and all features are visible
+            return;
+        }
+
+        var layer = featureManager.layerRecord && featureManager.layerRecord.getLayer();
+        if (!layer) {
+            // if the feature manager has no layer currently set, do nothing
+            return;
+        }
+        
+        // construct params for GetFeatureInfo request
+        // layer is not added to map, so we do this manually
+        var map = this.target.mapPanel.map;
+        var size = map.getSize();
+        var params = Ext.applyIf({
+            REQUEST: "GetFeatureInfo",
+            BBOX: map.getExtent().toBBOX(),
+            WIDTH: size.w,
+            HEIGHT: size.h,
+            X: evt.xy.x,
+            Y: evt.xy.y,
+            QUERY_LAYERS: layer.params.LAYERS,
+            INFO_FORMAT: "application/vnd.ogc.gml",
+            EXCEPTIONS: "application/vnd.ogc.se_xml",
+            FEATURE_COUNT: 1
+        }, layer.params);
+        var projectionCode = map.getProjection();
+        if (parseFloat(layer.params.VERSION) >= 1.3) {
+            params.CRS = projectionCode;
+        } else {
+            params.SRS = projectionCode;
+        }
+        
         var store = new GeoExt.data.FeatureStore({
             fields: {},
             proxy: new GeoExt.data.ProtocolProxy({
                 protocol: new OpenLayers.Protocol.HTTP({
-                    url: layer.getFullRequestString({
-                        REQUEST: "GetFeatureInfo",
-                        BBOX: this.target.mapPanel.map.getExtent().toBBOX(),
-                        WIDTH: size.w,
-                        HEIGHT: size.h,
-                        X: evt.xy.x,
-                        Y: evt.xy.y,
-                        QUERY_LAYERS: layer.params.LAYERS,
-                        INFO_FORMAT: "application/vnd.ogc.gml",
-                        EXCEPTIONS: "application/vnd.ogc.se_xml",
-                        FEATURE_COUNT: 1
-                    }),
+                    url: (typeof layer.url === "string") ? layer.url : layer.url[0],
+                    params: params,
                     format: new OpenLayers.Format.WMSGetFeatureInfo()
                 })
             }),
@@ -400,7 +451,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
                             fids: [fid] 
                         });
 
-                        autoLoad = function() {
+                        var autoLoad = function() {
                             featureManager.loadFeatures(
                                 filter, function(features) {
                                     this.autoLoadedFeature = features[0];

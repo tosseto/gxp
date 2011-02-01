@@ -37,7 +37,7 @@ Ext.namespace("gxp.plugins");
  *  .. code-block:: javascript
  *
  *    "google": {
- *        ptype: "gx_google"
+ *        ptype: "gxp_google"
  *    }
  *
  *  A typical configuration for a layer from this source (in the ``layers``
@@ -53,8 +53,8 @@ Ext.namespace("gxp.plugins");
  */
 gxp.plugins.GoogleSource = Ext.extend(gxp.plugins.LayerSource, {
     
-    /** api: ptype = gx_googlesource */
-    ptype: "gx_googlesource",
+    /** api: ptype = gxp_googlesource */
+    ptype: "gxp_googlesource",
     
     /** config: config[timeout]
      *  ``Number``
@@ -192,7 +192,7 @@ gxp.plugins.GoogleSource = Ext.extend(gxp.plugins.LayerSource, {
         if (this.target.mapPanel.layers.findBy(cmp) == -1) {
             // records can be in only one store
             record = this.store.getAt(this.store.findBy(cmp)).clone();
-            var layer = record.get("layer");
+            var layer = record.getLayer();
             // set layer title from config
             if (config.title) {
                 /**
@@ -216,7 +216,7 @@ gxp.plugins.GoogleSource = Ext.extend(gxp.plugins.LayerSource, {
                 record.set("group", config.group);
             }
             record.commit();
-        };
+        }
         return record;
     }
     
@@ -271,10 +271,12 @@ gxp.plugins.GoogleSource.loader = new (Ext.extend(Ext.util.Observable, {
      *  :arg options: ``Object``
      *
      *  Options:
+     *
      *  * callback - ``Function`` Called when script loads.
      *  * errback - ``Function`` Called if loading fails.
      *  * timeout - ``Number`` Time to wait before deciding that loading failed
      *      (in milliseconds).
+     *  * scope - ``Object`` The ``this`` object for callbacks.
      */
     onLoad: function(options) {
         if (this.ready) {
@@ -302,7 +304,7 @@ gxp.plugins.GoogleSource.loader = new (Ext.extend(Ext.util.Observable, {
             autoload: Ext.encode({
                 modules: [{
                     name: "maps",
-                    version: 3.2,
+                    version: 3.3,
                     nocss: "true",
                     callback: "gxp.plugins.GoogleSource.loader.onScriptLoad",
                     other_params: "sensor=false"
@@ -311,7 +313,7 @@ gxp.plugins.GoogleSource.loader = new (Ext.extend(Ext.util.Observable, {
         };
         
         var script = document.createElement("script");
-        script.src = "http://www.googled.com/jsapi?" + Ext.urlEncode(params);
+        script.src = "http://www.google.com/jsapi?" + Ext.urlEncode(params);
 
         // cancel loading if monitor is not ready within timeout
         var errback = options.errback || Ext.emptyFn;
@@ -332,7 +334,8 @@ gxp.plugins.GoogleSource.loader = new (Ext.extend(Ext.util.Observable, {
             ready: options.callback,
             scope: options.scope
         });
-        
+
+        this.loading = true;
         document.getElementsByTagName("head")[0].appendChild(script);
 
     }

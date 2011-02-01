@@ -273,10 +273,10 @@ gxp.grid.CapabilitiesGrid = Ext.extend(Ext.grid.GridPanel, {
              * other srs.
              */
             if (this.alignToGrid) {
-                layer = record.get("layer").clone();
+                layer = record.getLayer().clone();
                 layer.maxExtent = new OpenLayers.Bounds(-180, -90, 180, 90);
             } else {
-                layer = record.get("layer");
+                layer = record.getLayer();
                 /**
                  * TODO: The WMSCapabilitiesReader should allow for creation
                  * of layers in different SRS.
@@ -312,7 +312,7 @@ gxp.grid.CapabilitiesGrid = Ext.extend(Ext.grid.GridPanel, {
          */
         if(newRecords.length) {
             var index = this.mapPanel.layers.findBy(function(r) {
-                return r.get("layer") instanceof OpenLayers.Layer.Vector;
+                return r.getLayer() instanceof OpenLayers.Layer.Vector;
             });
             if(index !== -1) {
                 this.mapPanel.layers.insert(index, newRecords);
@@ -323,5 +323,5 @@ gxp.grid.CapabilitiesGrid = Ext.extend(Ext.grid.GridPanel, {
     }
 });
 
-/** api: xtype = gx_capabilitiesgrid */
-Ext.reg('gx_capabilitiesgrid', gxp.grid.CapabilitiesGrid); 
+/** api: xtype = gxp_capabilitiesgrid */
+Ext.reg('gxp_capabilitiesgrid', gxp.grid.CapabilitiesGrid); 

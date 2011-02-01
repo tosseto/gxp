@@ -28,8 +28,8 @@ Ext.namespace("gxp.plugins");
  */
 gxp.plugins.RemoveLayer = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gx_removelayer */
-    ptype: "gx_removelayer",
+    /** api: ptype = gxp_removelayer */
+    ptype: "gxp_removelayer",
     
     /** api: config[removeMenuText]
      *  ``String``
@@ -47,9 +47,9 @@ gxp.plugins.RemoveLayer = Ext.extend(gxp.plugins.Tool, {
      */
     addActions: function() {
         var selectedLayer;
-        var removeLayerAction = gxp.plugins.RemoveLayer.superclass.addActions.apply(this, [{
+        var actions = gxp.plugins.RemoveLayer.superclass.addActions.apply(this, [{
             menuText: this.removeMenuText,
-            iconCls: "gx-icon-removelayers",
+            iconCls: "gxp-icon-removelayers",
             disabled: true,
             tooltip: this.removeActionTip,
             handler: function() {
@@ -59,7 +59,8 @@ gxp.plugins.RemoveLayer = Ext.extend(gxp.plugins.Tool, {
                 }
             },
             scope: this
-        }])[0];
+        }]);
+        var removeLayerAction = actions[0];
 
         this.target.on("layerselectionchange", function(record) {
             selectedLayer = record;
@@ -75,9 +76,9 @@ gxp.plugins.RemoveLayer = Ext.extend(gxp.plugins.Tool, {
         this.target.mapPanel.layers.on({
             "add": enforceOne,
             "remove": enforceOne
-        })
+        });
         
-        return removeLayerAction;
+        return actions;
     }
         
 });

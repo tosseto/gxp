@@ -29,8 +29,8 @@ Ext.namespace("gxp.plugins");
  */   
 gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gx_wmsgetfeatureinfo */
-    ptype: "gx_wmsgetfeatureinfo",
+    /** api: ptype = gxp_wmsgetfeatureinfo */
+    ptype: "gxp_wmsgetfeatureinfo",
     
     /** api: config[outputTarget]
      *  ``String`` Popups created by this tool are added to the map by default.
@@ -61,7 +61,7 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
         
         var actions = gxp.plugins.WMSGetFeatureInfo.superclass.addActions.call(this, [{
             tooltip: this.infoActionTip,
-            iconCls: "gx-icon-getfeatureinfo",
+            iconCls: "gxp-icon-getfeatureinfo",
             toggleGroup: this.toggleGroup,
             enableToggle: true,
             allowDepress: true,
@@ -94,9 +94,9 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
             info.controls = [];
             queryableLayers.each(function(x){
                 var control = new OpenLayers.Control.WMSGetFeatureInfo({
-                    url: x.get("layer").url,
+                    url: x.getLayer().url,
                     queryVisible: true,
-                    layers: [x.get("layer")],
+                    layers: [x.getLayer()],
                     eventListeners: {
                         getfeatureinfo: function(evt) {
                             var match = evt.text.match(/<body[^>]*>([\s\S]*)<\/body>/);

@@ -56,6 +56,8 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
     opacityText: "Opacity",
     formatText: "Format",
     transparentText: "Transparent",
+    cacheText: "Cache",
+    cacheFieldText: "Use cached version",
     
     initComponent: function() {
         
@@ -65,13 +67,43 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
              */
             "change"
         );
-
         this.items = [
             this.createAboutPanel(),
             this.createDisplayPanel()
         ];
 
+        // only add the Cache panel if we know for sure the WMS is GeoServer
+        // which has been integrated with GWC.
+        if (this.layerRecord.get("layer").params.TILED != null) {
+            this.items.push(this.createCachePanel());
+        }
+
         gxp.WMSLayerPanel.superclass.initComponent.call(this);
+    },
+
+    /** private: createCachePanel
+     *  Creates the Cache panel.
+     */
+    createCachePanel: function() {
+        return {
+            title: this.cacheText,
+            layout: "form",
+            items: [{
+                xtype: "checkbox",
+                fieldLabel: this.cacheFieldText,
+                checked: (this.layerRecord.get("layer").params.TILED === true),
+                listeners: {
+                    check: function(checkbox, checked) {
+                        var layer = this.layerRecord.get("layer");
+                        layer.mergeNewParams({
+                            TILED: checked
+                        });
+                        this.fireEvent("change");
+                    },
+                    scope: this
+                }
+            }]    
+        };
     },
     
     /** private: createAboutPanel
@@ -130,7 +162,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
      */
     createDisplayPanel: function() {
         var record = this.layerRecord;
-        var layer = record.get("layer");
+        var layer = record.getLayer();
         var opacity = layer.opacity;
         if(opacity == null) {
             opacity = 1;
@@ -206,4 +238,4 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
 
 });
 
-Ext.reg('gx_wmslayerpanel', gxp.WMSLayerPanel); 
+Ext.reg('gxp_wmslayerpanel', gxp.WMSLayerPanel); 

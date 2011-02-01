@@ -31,21 +31,17 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
      */
     HORIZONTAL_FIELD_OF_VIEW: (30 * Math.PI) / 180,
     
-    /** api: config[map]
-     *  ``OpenLayers.Map or Object``  A map.
-     */
-
-    /** api: property[map]
+    /** private: property[map]
      *  ``OpenLayers.Map``
      *  The OpenLayers map associated with this panel.  Defaults
      *  to the map of the configured MapPanel
      */
     map: null,
 
-    /** api: property[mapPanel]
-     *  ``OpenLayers.Map``
-     *  The OpenLayers map associated with this panel.  Defaults
-     *  to the map of the configured MapPanel
+    /** api: config[mapPanel]
+     *  ``GeoExt.MapPanel | String``
+     *  The map panel associated with this panel.  If a MapPanel instance is 
+     *  not provided, a MapPanel id must be provided.
      */
     mapPanel: null,
 
@@ -82,13 +78,15 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
 
         gxp.GoogleEarthPanel.superclass.initComponent.call(this);
 
-        if (!this.map) {
-            this.map = this.mapPanel && this.mapPanel.map;
+        var mapPanel = this.mapPanel;
+        if (mapPanel && !(mapPanel instanceof GeoExt.MapPanel)) {
+            mapPanel = Ext.getCmp(mapPanel);
         }
-
-        if (!this.layers) {
-            this.layers = this.mapPanel && this.mapPanel.layers;
+        if (!mapPanel) {
+            throw new Error("Could not get map panel from config: " + this.mapPanel);
         }
+        this.map = mapPanel.map;
+        this.layers = mapPanel.layers;
 
         this.projection = new OpenLayers.Projection("EPSG:4326");
         
@@ -97,10 +95,13 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
         // or CSS display = none, the Google Earth plugin will show an error
         // message when it is re-enabled. To counteract this, we delete 
         // the instance and create a new one each time.
-        this.on("show", function() {
-            this.layerCache = {};
-            google.earth.createInstance(this.body.dom, this.onEarthReady.createDelegate(this), function(){});
-        }, this);
+        function render() {
+            if (this.rendered) {
+                this.layerCache = {};
+                google.earth.createInstance(this.body.dom, this.onEarthReady.createDelegate(this), function(){});
+            }
+        };
+        this.on("show", render, this);
         
         this.on("hide", function() {
             if (this.earth != null) {
@@ -182,25 +183,25 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
         if (this.earth) {
             var add = this.fireEvent("beforeadd", layer);
             if (add !== false) {
-                var name = layer.get("layer").id;
-
+                var name = layer.getLayer().id;
+                var networkLink;
                 if (this.layerCache[name]) {
-                    var networkLink = this.layerCache[name];
+                    networkLink = this.layerCache[name];
                 } else {
                     var link = this.earth.createLink('kl_' + name);
-                    var ows = layer.get("layer").url;
+                    var ows = layer.getLayer().url;
                     ows = ows.replace(/\?.*/, '');
-                    var params = layer.get("layer").params
+                    var params = layer.getLayer().params;
                     var kmlPath = '/kml?mode=refresh&layers=' + params.LAYERS +
                         "&styles=" + params.STYLES;
                     link.setHref(ows + kmlPath);
-                    var networkLink = this.earth.createNetworkLink('nl_' + name);
+                    networkLink = this.earth.createNetworkLink('nl_' + name);
                     networkLink.setName(name);
                     networkLink.set(link, false, false);
                     this.layerCache[name] = networkLink;
                 }
 
-                networkLink.setVisibility(layer.get("layer").getVisibility());
+                networkLink.setVisibility(layer.getLayer().getVisibility());
 
                 if (order !== undefined && order < this.earth.getFeatures().getChildNodes().getLength()) {
                     this.earth.getFeatures().
@@ -215,9 +216,8 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
     /** private: method[setExtent]
      *  Sets the view of the 3D visualization to approximate an OpenLayers extent.
      */
- 
     setExtent: function(extent) {
-        var extent = extent.transform(this.map.getProjectionObject(), this.projection);
+        extent = extent.transform(this.map.getProjectionObject(), this.projection);
         var center = extent.getCenterLonLat();
         
         var width = this.getExtentWidth(extent);
@@ -240,11 +240,10 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
         this.earth.getView().setAbstractView(camera);
     },
 
-    /** private: method[setExtent]
+    /** private: method[getExtent]
      *  Gets an OpenLayers.Bounds that approximates the visable area of
      *  3D visualization.
-     */    
-    
+     */ 
     getExtent: function() {
         var geBounds = this.earth.getView().getViewportGlobeBounds();
         var olBounds = new OpenLayers.Bounds(
@@ -255,8 +254,7 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
 
 
     /** private: method[updateMap]
-     */    
-    
+     */
     updateMap: function() {
         // Get the center of the map from GE. We let GE get the center (as opposed to getting
         // the extent and then finding the center) because it'll find the correct visual
@@ -285,7 +283,6 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
         // we expect, then we zoom to that zoom level.
         //
         // Big note: This expects a map that has fractional zoom disabled!
-        var lookAt = this.earth.getView().copyAsLookAt(this.earth.ALTITUDE_RELATIVE_TO_GROUND);
         var height = lookAt.getRange();
         
         var width = 2 * height * Math.tan(this.HORIZONTAL_FIELD_OF_VIEW);
@@ -310,8 +307,7 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
 
 
     /** private: method[getExentWidth]
-     */    
-    
+     */
     getExtentWidth: function(extent) {
         var center = extent.getCenterLonLat();
         
@@ -323,15 +319,19 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
     
 
     /** private: method[reprojectToGE]
-     */    
+     */
     reprojectToGE: function(data) {
         return data.clone().transform(this.map.getProjectionObject(), this.projection);
     },
     
 
     /** private: method[reprojectToMap]
-     */    
+     */
     reprojectToMap: function(data) {
         return data.clone().transform(this.projection, this.map.getProjectionObject());
     }
 });
+
+
+/** api: xtype = gxp_googleearthpanel */
+Ext.reg("gxp_googleearthpanel", gxp.GoogleEarthPanel);

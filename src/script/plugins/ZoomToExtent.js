@@ -28,9 +28,13 @@ Ext.namespace("gxp.plugins");
  */
 gxp.plugins.ZoomToExtent = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gx_zoomtoextent */
-    ptype: "gx_zoomtoextent",
+    /** api: ptype = gxp_zoomtoextent */
+    ptype: "gxp_zoomtoextent",
     
+    /** api: config[buttonText]
+     *  ``String`` Text to show next to the zoom button
+     */
+     
     /** api: config[menuText]
      *  ``String``
      *  Text for zoom menu item (i18n).
@@ -50,6 +54,24 @@ gxp.plugins.ZoomToExtent = Ext.extend(gxp.plugins.Tool, {
      */
     extent: null,
     
+    /** api: config[closest]
+     *  ``Boolean`` Find the zoom level that most closely fits the specified
+     *  extent. Note that this may result in a zoom that does not exactly
+     *  contain the entire extent.  Default is true.
+     */
+    closest: true,
+    
+    /** private: property[iconCls]
+     */
+    iconCls: "gxp-icon-zoomtoextent",
+    
+    /** api: config[closest]
+     *  ``Boolean`` Find the zoom level that most closely fits the specified
+     *  extent. Note that this may result in a zoom that does not exactly
+     *  contain the entire extent.  Default is true.
+     */
+    closest: true,
+    
     /** private: method[constructor]
      */
     constructor: function(config) {
@@ -63,12 +85,13 @@ gxp.plugins.ZoomToExtent = Ext.extend(gxp.plugins.Tool, {
      */
     addActions: function() {
         return gxp.plugins.ZoomToExtent.superclass.addActions.apply(this, [{
-            menuText: this.removeMenuText,
-            iconCls: "gx-icon-zoomtoextent",
+            text: this.buttonText,
+            menuText: this.menuText,
+            iconCls: this.iconCls,
             tooltip: this.tooltip,
             handler: function() {
                 var map = this.target.mapPanel.map;
-                var extent = this.extent;
+                var extent = typeof this.extent == "function" ? this.extent() : this.extent;
                 if (!extent) {
                     // determine visible extent
                     var layer, extended;
@@ -85,7 +108,17 @@ gxp.plugins.ZoomToExtent = Ext.extend(gxp.plugins.Tool, {
                     }
                 }
                 if (extent) {
-                    map.zoomToExtent(extent, true);
+                    // respect map properties
+                    var restricted = map.restrictedExtent || map.maxExtent;
+                    if (restricted) {
+                        extent = new OpenLayers.Bounds(
+                            Math.max(extent.left, restricted.left),
+                            Math.max(extent.bottom, restricted.bottom),
+                            Math.min(extent.right, restricted.right),
+                            Math.min(extent.top, restricted.top)
+                        );
+                    }
+                    map.zoomToExtent(extent, this.closest);
                 }
             },
             scope: this

@@ -56,7 +56,7 @@ Ext.onReady(function() {
                 var record = grid.getSelectionModel().getSelected();
                 if(record) {
                     var copy = record.clone();
-                    copy.get("layer").mergeNewParams({
+                    copy.getLayer().mergeNewParams({
                         format: "image/png",
                         transparent: "true"
                     });
@@ -97,7 +97,7 @@ Ext.onReady(function() {
                     var layer = node.layer;
                     var store = node.layerStore;
                     record = store.getAt(store.findBy(function(record) {
-                        return record.get("layer") === layer;
+                        return record.getLayer() === layer;
                     }));
                 }
                 if(record) {
@@ -121,7 +121,7 @@ function showProp(record) {
         height: 350,
         layout: "fit",
         items: [{
-            xtype: "gx_wmslayerpanel",
+            xtype: "gxp_wmslayerpanel",
             layerRecord: record,
             defaults: {style: "padding: 10px"}
         }]

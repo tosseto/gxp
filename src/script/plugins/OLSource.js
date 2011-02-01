@@ -38,7 +38,7 @@ Ext.namespace("gxp.plugins");
  *  .. code-block:: javascript
  *
  *    "ol": {
- *        ptype: "gx_olsource"
+ *        ptype: "gxp_olsource"
  *    }
  *
  *  A typical configuration for a layer from this source (in the ``layers``
@@ -55,8 +55,8 @@ Ext.namespace("gxp.plugins");
  */
 gxp.plugins.OLSource = Ext.extend(gxp.plugins.LayerSource, {
     
-    /** api: ptype = gx_olsource */
-    ptype: "gx_olsource",
+    /** api: ptype = gxp_olsource */
+    ptype: "gxp_olsource",
     
     /** api: method[createLayerRecord]
      *  :arg config:  ``Object``  The application config for this layer.
@@ -85,7 +85,7 @@ gxp.plugins.OLSource = Ext.extend(gxp.plugins.LayerSource, {
             var Constructor = function() {
                 // this only works for args that can be serialized as JSON
                 Class.prototype.initialize.apply(this, config.args);
-            }
+            };
             Constructor.prototype = Class.prototype;
 
             // create a new layer given type and args
@@ -133,7 +133,7 @@ gxp.plugins.OLSource = Ext.extend(gxp.plugins.LayerSource, {
         // get general config
         var config = gxp.plugins.OLSource.superclass.getConfigForRecord.apply(this, arguments);
         // add config specific to this source
-        var layer = record.get("layer");
+        var layer = record.getLayer();
         return Ext.apply(config, {
             type: record.get("type"),
             args: record.get("args")

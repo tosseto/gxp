@@ -273,7 +273,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
             items: {
                 border: false,
                 items: {
-                    xtype: "gx_stylepropertiesdialog",
+                    xtype: "gxp_stylepropertiesdialog",
                     userStyle: userStyle.clone(),
                     // styles that came from the server
                     // have a name that we don't change
@@ -482,7 +482,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
             autoHeight: true,
             modal: true,
             items: [{
-                xtype: "gx_rulepanel",
+                xtype: "gxp_rulepanel",
                 symbolType: this.symbolType,
                 rule: rule,
                 fonts: this.fonts,                 
@@ -552,7 +552,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
         if (!data || !data.documentElement) {
             data = new OpenLayers.Format.XML().read(response.responseText);
         }
-        var layerParams = this.layerRecord.get("layer").params;
+        var layerParams = this.layerRecord.getLayer().params;
 
         var initialStyle = this.initialConfig.styleName || layerParams.STYLES;
         if (initialStyle) {
@@ -587,7 +587,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
                 userStyle = userStyles[i];
                 // remove existing record - this way we replace styles from
                 // userStyles with inline styles.
-                var index = this.stylesStore.find("name", userStyle.name)
+                index = this.stylesStore.findExact("name", userStyle.name);
                 index !== -1 && this.stylesStore.removeAt(index);
                 record = new this.stylesStore.recordType({
                     "name": userStyle.name,
@@ -726,13 +726,15 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
      *      request result was returned.
      */
     getStyles: function(callback) {
-        var layer = this.layerRecord.get("layer");
+        var layer = this.layerRecord.getLayer();
         if(this.editable === true) {
             Ext.Ajax.request({
                 url: layer.url,
                 params: {
+                    "SERVICE": "WMS",
+                    "VERSION": layer.params["VERSION"],
                     "REQUEST": "GetStyles",
-                    "LAYERS": layer.params.LAYERS
+                    "LAYERS": [layer.params["LAYERS"]].join(",")
                 },
                 success: this.parseSLD,
                 failure: this.setupNonEditable,
@@ -753,10 +755,11 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
             callback.call(this);
             return;
         }
-        var layer = this.layerRecord.get("layer");
+        var layer = this.layerRecord.getLayer();
         Ext.Ajax.request({
             url: layer.url,
             params: {
+                "SERVICE": "WMS",
                 "VERSION": layer.params["VERSION"],
                 "REQUEST": "DescribeLayer",
                 "LAYERS": [layer.params["LAYERS"]].join(",")
@@ -787,7 +790,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
             displayField: "name",
             value: this.selectedStyle ?
                 this.selectedStyle.get("name") :
-                this.layerRecord.get("layer").params.STYLES || "default",
+                this.layerRecord.getLayer().params.STYLES || "default",
             disabled: !store.getCount(),
             mode: "local",
             typeAhead: true,
@@ -845,7 +848,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
      *  event. Updates the layer and the rules fieldset.
      */
     changeStyle: function(record, options) {
-        options = options || {}
+        options = options || {};
         var legend = this.items.get(2).items.get(0);
         this.selectedStyle = record;
         this.updateStyleRemoveButton();            
@@ -894,6 +897,8 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
         var legend = this.items.get(2).add({
             xtype: "gx_vectorlegend",
             showTitle: false,
+            height: rules.length > 10 ? 250 : undefined,
+            autoScroll: rules.length > 10,
             rules: rules,
             symbolType: this.symbolType,
             selectOnClick: true,
@@ -933,5 +938,5 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
     
 });
 
-/** api: xtype = gx_wmsstylesdialog */
-Ext.reg('gx_wmsstylesdialog', gxp.WMSStylesDialog);
+/** api: xtype = gxp_wmsstylesdialog */
+Ext.reg('gxp_wmsstylesdialog', gxp.WMSStylesDialog);

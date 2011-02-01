@@ -27,8 +27,8 @@ Ext.namespace("gxp.plugins");
  */   
 gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gx_layertree */
-    ptype: "gx_layertree",
+    /** api: ptype = gxp_layertree */
+    ptype: "gxp_layertree",
 
     /** api: config[rootNodeText]
      *  ``String``
@@ -80,14 +80,14 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
             allowDrop: false
         });
         treeRoot.appendChild(new GeoExt.tree.LayerContainer({
-            text: this.overlayText,
-            iconCls: "gx-folder",
+            text: this.overlayNodeText,
+            iconCls: "gxp-folder",
             expanded: true,
             loader: new GeoExt.tree.LayerLoader({
                 store: this.target.mapPanel.layers,
                 filter: function(record) {
                     return !record.get("group") &&
-                        record.get("layer").displayInLayerSwitcher == true;
+                        record.getLayer().displayInLayerSwitcher == true;
                 },
                 createNode: function(attr) {
                     attr.uiProvider = LayerNodeUI;
@@ -95,10 +95,10 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                     var store = attr.layerStore;
                     if (layer && store) {
                         var record = store.getAt(store.findBy(function(r) {
-                            return r.get("layer") === layer;
+                            return r.getLayer() === layer;
                         }));
                         if (record && !record.get("queryable")) {
-                            attr.iconCls = "gx-tree-rasterlayer-icon";
+                            attr.iconCls = "gxp-tree-rasterlayer-icon";
                         }
                     }
                     var node = GeoExt.tree.LayerLoader.prototype.createNode.apply(this, [attr]);
@@ -117,7 +117,7 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
         
         treeRoot.appendChild(new GeoExt.tree.LayerContainer({
             text: this.baseNodeText,
-            iconCls: "gx-folder",
+            iconCls: "gxp-folder",
             expanded: true,
             group: "background",
             loader: new GeoExt.tree.LayerLoader({
@@ -125,7 +125,7 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                 store: this.target.mapPanel.layers,
                 filter: function(record) {
                     return record.get("group") === "background" &&
-                        record.get("layer").displayInLayerSwitcher == true;
+                        record.getLayer().displayInLayerSwitcher == true;
                 },
                 createNode: function(attr) {
                     attr.uiProvider = LayerNodeUI;
@@ -133,11 +133,11 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                     var store = attr.layerStore;
                     if (layer && store) {
                         var record = store.getAt(store.findBy(function(r) {
-                            return r.get("layer") === layer;
+                            return r.getLayer() === layer;
                         }));
                         if (record) {
                             if (!record.get("queryable")) {
-                                attr.iconCls = "gx-tree-rasterlayer-icon";
+                                attr.iconCls = "gxp-tree-rasterlayer-icon";
                             }
                             if (record.get("fixed")) {
                                 attr.allowDrag = false;
@@ -172,7 +172,7 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                         if (layer) {
                             var store = node.layerStore;
                             var record = store.getAt(store.findBy(function(r) {
-                                return r.get("layer") === layer;
+                                return r.getLayer() === layer;
                             }));
                             this.selectionChanging = true;
                             changed = this.target.selectLayer(record);
@@ -197,7 +197,7 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                     if(oldParent !== newParent) {
                         var store = newParent.loader.store;
                         var index = store.findBy(function(r) {
-                            return r.get("layer") === node.layer;
+                            return r.getLayer() === node.layer;
                         });
                         var record = store.getAt(index);
                         record.set("group", newParent.attributes.group);

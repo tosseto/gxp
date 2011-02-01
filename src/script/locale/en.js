@@ -1,13 +1,22 @@
 
 GeoExt.Lang.add("en", {
 
-    "gxp.plugins.BingSource.prototype": {
-        title: "Bing Layers",
-        roadTitle: "Road",
-        aerialTitle: "Aerial",
-        labeledAerialTitle: "Bing Aerial With Labels"
+    "gxp.plugins.AddLayers.prototype": {
+        addMenuText: "Add layers",
+        addActionTip: "Add layers",
+        addServerText: "Add a New Server",
+        untitledText: "Untitled",
+        addLayerSourceErrorText: "Error getting WMS capabilities ({msg}).\nPlease check the url and try again.",
+        availableLayersText: "Available Layers",
+        doneText: "Done"
     },
     
+    "gxp.plugins.BingSource.prototype": {
+        title: "Bing Layers",
+        roadTitle: "Bing Roads",
+        aerialTitle: "Bing Aerial",
+        labeledAerialTitle: "Bing Aerial With Labels"
+    },    
 
     "gxp.plugins.FeatureEditor.prototype": {
         createFeatureActionTip: "Create a new feature",
@@ -16,7 +25,11 @@ GeoExt.Lang.add("en", {
     
     "gxp.plugins.FeatureGrid.prototype": {
         displayFeatureText: "Display on map",
-        zoomToSelectedText: "Zoom to selected"
+        firstPageTip: "First page",
+        previousPageTip: "Previous page",
+        zoomPageExtentTip: "Zoom to page extent",
+        nextPageTip: "Next page",
+        nextPageTip: "Last page"
     },
     
     "gxp.plugins.GoogleSource.prototype": {
@@ -26,6 +39,11 @@ GeoExt.Lang.add("en", {
         hybridAbstract: "Show imagery with street names",
         terrainAbstract: "Show street map with terrain"
     },
+
+    "gxp.plugins.LayerProperties.prototype": {
+        menuText: "Layer Properties",
+        toolTip: "Layer Properties"
+    },
     
     "gxp.plugins.LayerTree.prototype": {
         rootNodeText: "Layers",
@@ -33,19 +51,56 @@ GeoExt.Lang.add("en", {
         baseNodeText: "Base Layers"
     },
 
+    "gxp.plugins.Legend.prototype": {
+        menuText: "Show Legend",
+        tooltip: "Show Legend"
+    },
+
+    "gxp.plugins.Measure.prototype": {
+        lengthMenuText: "Length",
+        areaMenuText: "Area",
+        lengthTooltip: "Measure length",
+        areaTooltip: "Measure area",
+        measureTooltip: "Measure"
+    },
+
+    "gxp.plugins.Navigation.prototype": {
+        menuText: "Pan Map",
+        tooltip: "Pan Map"
+    },
+
+    "gxp.plugins.NavigationHistory.prototype": {
+        previousMenuText: "Zoom To Previous Extent",
+        nextMenuText: "Zoom To Next Extent",
+        previousTooltip: "Zoom To Previous Extent",
+        nextTooltip: "Zoom To Next Extent"
+    },
+
     "gxp.plugins.OSMSource.prototype": {
         title: "OpenStreetMap Layers",
         mapnikAttribution: "Data CC-By-SA by <a href='http://openstreetmap.org/'>OpenStreetMap</a>",
         osmarenderAttribution: "Data CC-By-SA by <a href='http://openstreetmap.org/'>OpenStreetMap</a>"
     },
-    
+
+    "gxp.plugins.MapQuestSource.prototype": {
+        title: "MapQuest Layers",
+        osmAttribution: "Tiles Courtesy of <a href='http://open.mapquest.co.uk/' target='_blank'>MapQuest</a> <img src='http://developer.mapquest.com/content/osm/mq_logo.png' border='0'>",
+        osmTitle: "MapQuest OpenStreetMap",
+        naipAttribution: "Tiles Courtesy of <a href='http://open.mapquest.co.uk/' target='_blank'>MapQuest</a> <img src='http://developer.mapquest.com/content/osm/mq_logo.png' border='0'>",
+        naipTitle: "MapQuest Imagery"
+    },
+
     "gxp.plugins.QueryForm.prototype": {
         queryActionText: "Query",
         queryMenuText: "Query layer",
         queryActionTip: "Query the selected layer",
         queryByLocationText: "Query by location",
         currentTextText: "Current extent",
-        queryByAttributesText: "Query by attributes"
+        queryByAttributesText: "Query by attributes",
+        queryMsg: "Querying...",
+        cancelButtonText: "Cancel",
+        noFeaturesTitle: "No Match",
+        noFeaturesMessage: "Your query did not return any results."
     },
 
     "gxp.plugins.RemoveLayer.prototype": {
@@ -56,6 +111,33 @@ GeoExt.Lang.add("en", {
     "gxp.plugins.WMSGetFeatureInfo.prototype": {
         infoActionTip: "Get Feature Info",
         popupTitle: "Feature Info"
+    },
+
+    "gxp.plugins.Zoom.prototype": {
+        zoomInMenuText: "Zoom In",
+        zoomOutMenuText: "Zoom Out",
+        zoomInTooltip: "Zoom In",
+        zoomOutTooltip: "Zoom Out"
+    },
+    
+    "gxp.plugins.ZoomToExtent.prototype": {
+        menuText: "Zoom To Max Extent",
+        tooltip: "Zoom To Max Extent"
+    },
+    
+    "gxp.plugins.ZoomToDataExtent.prototype": {
+        menuText: "Zoom to layer extent",
+        tooltip: "Zoom to layer extent"
+    },
+
+    "gxp.plugins.ZoomToLayerExtent.prototype": {
+        menuText: "Zoom to layer extent",
+        tooltip: "Zoom to layer extent"
+    },
+    
+    "gxp.plugins.ZoomToSelectedFeatures.prototype": {
+        menuText: "Zoom to selected features",
+        tooltip: "Zoom to selected features"
     },
 
     "gxp.FeatureEditPopup.prototype": {
@@ -148,7 +230,20 @@ GeoExt.Lang.add("en", {
         displayText: "Display",
         opacityText: "Opacity",
         formatText: "Format",
-        transparentText: "Transparent"
+        transparentText: "Transparent",
+        cacheText: "Cache",
+        cacheFieldText: "Use cached version"
+    },
+
+    "gxp.EmbedMapDialog.prototype": {
+        publishMessage: "Your map is ready to be published to the web! Simply copy the following HTML to embed the map in your website:",
+        heightLabel: 'Height',
+        widthLabel: 'Width',
+        mapSizeLabel: 'Map Size',
+        miniSizeLabel: 'Mini',
+        smallSizeLabel: 'Small',
+        premiumSizeLabel: 'Premium',
+        largeSizeLabel: 'Large'
     }
 
 });

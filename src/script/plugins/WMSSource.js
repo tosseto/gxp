@@ -11,9 +11,9 @@
  */
 
 /**
- * The WMSCapabilities and WFSDescribeFEature formats parse the document and
+ * The WMSCapabilities and WFSDescribeFeatureType formats parse the document and
  * pass the raw data to the WMSCapabilitiesReader/AttributeReader.  There,
- * records are created from layer data.  The rest of the data is lossed.  It
+ * records are created from layer data.  The rest of the data is lost.  It
  * makes sense to store this raw data somewhere - either on the OpenLayers
  * format or the GeoExt reader.  Until there is a better solution, we'll
  * override the reader's readRecords method  here so that we can have access to
@@ -58,7 +58,7 @@ Ext.namespace("gxp.plugins");
  *
  *  .. code-block:: javascript
  *
- *    defaultSourceType: "gx_wmssource",
+ *    defaultSourceType: "gxp_wmssource",
  *    sources: {
  *        "opengeo": {
  *            url: "http://suite.opengeo.org/geoserver/wms"
@@ -79,12 +79,24 @@ Ext.namespace("gxp.plugins");
  */
 gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
     
-    /** api: ptype = gx_wmssource */
-    ptype: "gx_wmssource",
+    /** api: ptype = gxp_wmssource */
+    ptype: "gxp_wmssource",
     
     /** api: config[url]
      *  ``String`` WMS service URL for this source
      */
+
+    /** api: baseParams
+     *  ``Object`` Base parameters to use on the WMS GetCapabilities
+     *  request.
+     */
+    baseParams: null,
+
+    /** api: format
+     * ``OpenLayers.Format`` Optional custom format to use on the 
+     * WMSCapabilitiesStore store instead of the default.
+     */
+    format: null,
     
     /** private: property[describeLayerStore]
      *  ``GeoExt.data.WMSDescribeLayerStore`` additional store of layer
@@ -101,17 +113,28 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      */
     schemaCache: null,
     
+    /** api: config[version]
+     *  ``String``
+     *  If specified, the version string will be included in WMS GetCapabilities
+     *  requests.  By default, no version is set.
+     */
+    
     /** api: method[createStore]
      *
      *  Creates a store of layer records.  Fires "ready" when store is loaded.
      */
     createStore: function() {
+        var baseParams = this.baseParams || {
+            SERVICE: "WMS",
+            REQUEST: "GetCapabilities"
+        };
+        if (this.version) {
+            baseParams.VERSION = this.version;
+        }
         this.store = new GeoExt.data.WMSCapabilitiesStore({
             url: this.url,
-            baseParams: {
-                SERVICE: "WMS",
-                REQUEST: "GetCapabilities"
-            },
+            baseParams: baseParams,
+            format: this.format,
             autoLoad: true,
             listeners: {
                 load: function() {
@@ -137,7 +160,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                         msg = "Trouble creating layer store from response.";
                     }
                     // TODO: decide on signature for failure listeners
-                    this.fireEvent("failure", this, msg, Array.prototype.concat(arguments));
+                    this.fireEvent("failure", this, msg, Array.prototype.slice.call(arguments));
                 },
                 scope: this
             }
@@ -156,7 +179,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         if (index > -1) {
             var original = this.store.getAt(index);
 
-            var layer = original.get("layer");
+            var layer = original.getLayer();
 
             /**
              * TODO: The WMSCapabilitiesReader should allow for creation
@@ -170,8 +193,11 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             var layerProjection = this.getProjection(original);
 
             var nativeExtent = original.get("bbox")[projection.getCode()];
+            var swapAxis = OpenLayers.Layer.WMS.prototype.reverseAxisOrder.call(
+                Ext.applyIf({map: this.target.mapPanel.map}, layer)
+            );
             var maxExtent = 
-                (nativeExtent && OpenLayers.Bounds.fromArray(nativeExtent.bbox)) || 
+                (nativeExtent && OpenLayers.Bounds.fromArray(nativeExtent.bbox, swapAxis)) || 
                 OpenLayers.Bounds.fromArray(original.get("llbbox")).transform(new OpenLayers.Projection("EPSG:4326"), projection);
             
             // make sure maxExtent is valid (transform does not succeed for all llbbox)
@@ -209,7 +235,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                 title: layer.name,
                 group: config.group,
                 source: config.source,
-                properties: "gx_wmslayerpanel",
+                properties: "gxp_wmslayerpanel",
                 fixed: config.fixed,
                 selected: "selected" in config ? config.selected : false,
                 layer: layer
@@ -274,8 +300,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             this.describeLayerStore = new GeoExt.data.WMSDescribeLayerStore({
                 url: req.href,
                 baseParams: {
-                    // TODO: version negotiation?
-                    VERSION: "1.1.1",
+                    VERSION: this.store.reader.raw.version,
                     REQUEST: "DescribeLayer"
                 }
             });
@@ -307,10 +332,16 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             var recs = Ext.isArray(arguments[1]) ? arguments[1] : arguments[0];
             var rec;
             for (var i=recs.length-1; i>=0; i--) {
-                rec = recs[i];
-                if (rec.get("layerName") == layerName) {
+                rec = recs[i], name;
+                if ((name = rec.get("layerName")) == layerName) {
+                    this.describeLayerStore.un("load", arguments.callee, this);
+                    this.describedLayers[name] = true;
                     callback.call(scope, rec);
                     return;
+                } else if (typeof this.describedLayers[name] == "function") {
+                    var fn = this.describedLayers[name];
+                    this.describeLayerStore.un("load", fn, this);
+                    fn.apply(this, arguments);
                 }
             }
             // something went wrong (e.g. GeoServer does not return a valid
@@ -321,14 +352,15 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         var describedLayers = this.describedLayers;
         var index;
         if (!describedLayers[layerName]) {
-            describedLayers[layerName] = true;
+            describedLayers[layerName] = cb;
             this.describeLayerStore.load({
                 params: {LAYERS: layerName},
                 add: true,
-                callback: cb
+                callback: cb,
+                scope: this
             });
         } else if ((index = this.describeLayerStore.findExact("layerName", layerName)) == -1) {
-            this.describeLayerStore.on("load", cb, this, {single: true});
+            this.describeLayerStore.on("load", cb, this);
         } else {
             callback.call(scope, this.describeLayerStore.getAt(index));
         }
@@ -367,7 +399,8 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                         url: r.get("owsURL"),
                         baseParams: {
                             SERVICE: "WFS",
-                            VERSION: "1.1.1",
+                            //TODO should get version from WFS GetCapabilities
+                            VERSION: "1.1.0",
                             REQUEST: "DescribeFeatureType",
                             TYPENAME: typeName
                         },
@@ -395,7 +428,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      */
     getConfigForRecord: function(record) {
         var config = gxp.plugins.WMSSource.superclass.getConfigForRecord.apply(this, arguments);
-        var layer = record.get("layer");
+        var layer = record.getLayer();
         var params = layer.params;
         return Ext.apply(config, {
             format: params.FORMAT,

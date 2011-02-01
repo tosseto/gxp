@@ -34,7 +34,7 @@ Ext.namespace("gxp.plugins");
  *  .. code-block:: javascript
  *
  *    "osm": {
- *        ptype: "gx_osmsource"
+ *        ptype: "gxp_osmsource"
  *    }
  *
  *  A typical configuration for a layer from this source (in the ``layers``
@@ -50,8 +50,8 @@ Ext.namespace("gxp.plugins");
  */
 gxp.plugins.OSMSource = Ext.extend(gxp.plugins.LayerSource, {
     
-    /** api: ptype = gx_osmsource */
-    ptype: "gx_osmsource",
+    /** api: ptype = gxp_osmsource */
+    ptype: "gxp_osmsource",
 
     /** api: property[store]
      *  ``GeoExt.data.LayerStore``. Will contain records with "mapnik" and
@@ -63,18 +63,18 @@ gxp.plugins.OSMSource = Ext.extend(gxp.plugins.LayerSource, {
      *  A descriptive title for this layer source (i18n).
      */
     title: "OpenStreetMap Layers",
-    
-    /** api: config[osmAttribution]
+
+    /** api: config[mapnikAttribution]
      *  ``String``
      *  Attribution string for mapnik generated layer (i18n).
      */
-    mapnikAttribution: "Data CC-By-SA by <a href='http://openstreetmap.org/'>OpenStreetMap</a>",
+    mapnikAttribution: "Data CC-By-SA by <a href='http://openstreetmap.org/' target='_blank'>OpenStreetMap</a>",
 
     /** api: config[homeAttribution]
      *  ``String``
      *  Attribution string for osmarender generated layer (i18n).
      */
-    osmarenderAttribution: "Data CC-By-SA by <a href='http://openstreetmap.org/'>OpenStreetMap</a>",
+    osmarenderAttribution: "Data CC-By-SA by <a href='http://openstreetmap.org/' target='_blank'>OpenStreetMap</a>",
 
     /** api: method[createStore]
      *
@@ -151,7 +151,7 @@ gxp.plugins.OSMSource = Ext.extend(gxp.plugins.LayerSource, {
         if (index > -1) {
 
             record = this.store.getAt(index).copy(Ext.data.Record.id({}));
-            var layer = record.get("layer").clone();
+            var layer = record.getLayer().clone();
  
             // set layer title from config
             if (config.title) {
@@ -167,7 +167,7 @@ gxp.plugins.OSMSource = Ext.extend(gxp.plugins.LayerSource, {
 
             // set visibility from config
             if ("visibility" in config) {
-                layer.visibility = config.visibility
+                layer.visibility = config.visibility;
             }
             
             record.set("selected", config.selected || false);
@@ -179,7 +179,7 @@ gxp.plugins.OSMSource = Ext.extend(gxp.plugins.LayerSource, {
 
             record.data.layer = layer;
             record.commit();
-        };
+        }
         return record;
     }
 
