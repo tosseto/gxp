@@ -179,20 +179,7 @@ GeoExt.Lang.add("en", {
         expanderTemplateText: "<p><b>Abstract:</b> {abstract}</p>"
     },
     
-    "gxp.PointSymbolizer.prototype": {
-        graphicCircleText: "circle",
-        graphicSquareText: "square",
-        graphicTriangleText: "triangle",
-        graphicStarText: "star",
-        graphicCrossText: "cross",
-        graphicXText: "x",
-        graphicExternalText: "external",
-        urlText: "URL",
-        opacityText: "opacity",
-        symbolText: "Symbol",
-        sizeText: "Size",
-        rotationText: "Rotation"
-    },
+
 
     "gxp.QueryPanel.prototype": {
         queryByLocationText: "Query by location",
@@ -210,7 +197,22 @@ GeoExt.Lang.add("en", {
         symbolText: "Symbol",
         nameText: "Name"
     },
-    
+
+    "gxp.PointSymbolizer.prototype": {
+        graphicCircleText: "circle",
+        graphicSquareText: "square",
+        graphicTriangleText: "triangle",
+        graphicStarText: "star",
+        graphicCrossText: "cross",
+        graphicXText: "x",
+        graphicExternalText: "external",
+        urlText: "URL",
+        opacityText: "opacity",
+        symbolText: "Symbol",
+        sizeText: "Size",
+        rotationText: "Rotation"
+    },
+
     "gxp.ScaleLimitPanel.prototype": {
         scaleSliderTemplate: "{scaleType} Scale 1:{scale}",
         maxScaleLimitText: "Max scale limit"

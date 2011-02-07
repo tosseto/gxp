@@ -66,15 +66,7 @@ gxp.PointSymbolizer = Ext.extend(Ext.Panel, {
      *  * mark - ``Boolean`` The value is a well-known name for a mark.  If
      *      ``false``, the value will be assumed to be a url for an external graphic.
      */
-    pointGraphics: [
-        {display: this.graphicCircleText, value: "circle", mark: true},
-        {display: this.graphicSquareText, value: "square", mark: true},
-        {display: this.graphicTriangleText, value: "triangle", mark: true},
-        {display: this.graphicStarText, value: "star", mark: true},
-        {display: this.graphicCrossText, value: "cross", mark: true},
-        {display: this.graphicXText, value: "x", mark: true},
-        {display: this.graphicExternalText}
-    ],
+    pointGraphics: null,
     
    /** api: config[colorManager]
      *  ``Function``
@@ -99,7 +91,21 @@ gxp.PointSymbolizer = Ext.extend(Ext.Panel, {
         if(!this.symbolizer) {
             this.symbolizer = {};
         }        
-        
+
+        if (!this.pointGraphics)
+        {
+            this.pointGraphics = [
+            {display: this.graphicCircleText, value: "circle", mark: true},
+            {display: this.graphicSquareText, value: "square", mark: true},
+            {display: this.graphicTriangleText, value: "triangle", mark: true},
+            {display: this.graphicStarText, value: "star", mark: true},
+            {display: this.graphicCrossText, value: "cross", mark: true},
+            {display: this.graphicXText, value: "x", mark: true},
+            {display: this.graphicExternalText}
+            ];
+        }
+
+
         this.external = !!this.symbolizer["externalGraphic"];
 
         this.markPanel = new Ext.Panel({
@@ -194,7 +200,7 @@ gxp.PointSymbolizer = Ext.extend(Ext.Panel, {
                     '<tpl if="preview">' +
                         '<img src="{preview}" alt="{display}"/>' +
                     '</tpl>' +
-                    '<span>{display}</span>' +
+                    '<span>{display}|{value}|{preview}|{mark}</span>' +
                 '</div></tpl>'
             ),
             mode: "local",

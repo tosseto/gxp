@@ -483,7 +483,6 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
             modal: true,
             items: [{
                 xtype: "gxp_rulepanel",
-                fonts: this.fonts,
                 symbolType: this.symbolType,
                 rule: rule,
                 fonts: this.fonts,                 
