@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the BSD license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -18,7 +18,7 @@
  * format or the GeoExt reader.  Until there is a better solution, we'll
  * override the reader's readRecords method  here so that we can have access to
  * the raw data later.
- * 
+ *
  * The purpose of all of this is to get the service title, feature type and
  * namespace later.
  * TODO: push this to OpenLayers or GeoExt
@@ -52,7 +52,7 @@ Ext.namespace("gxp.plugins");
  *    Plugin for using WMS layers with :class:`gxp.Viewer` instances. The
  *    plugin issues a GetCapabilities request to create a store of the WMS's
  *    layers.
- */   
+ */
 /** api: example
  *  Configuration in the  :class:`gxp.Viewer`:
  *
@@ -78,10 +78,10 @@ Ext.namespace("gxp.plugins");
  *
  */
 gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
-    
+
     /** api: ptype = gxp_wmssource */
     ptype: "gxp_wmssource",
-    
+
     /** api: config[url]
      *  ``String`` WMS service URL for this source
      */
@@ -93,32 +93,32 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
     baseParams: null,
 
     /** api: format
-     * ``OpenLayers.Format`` Optional custom format to use on the 
+     * ``OpenLayers.Format`` Optional custom format to use on the
      * WMSCapabilitiesStore store instead of the default.
      */
     format: null,
-    
+
     /** private: property[describeLayerStore]
      *  ``GeoExt.data.WMSDescribeLayerStore`` additional store of layer
      *  descriptions. Will only be available when the source is configured
      *  with ``describeLayers`` set to true.
      */
     describeLayerStore: null,
-    
+
     /** private: property[describedLayers]
      */
     describedLayers: null,
-    
+
     /** private: property[schemaCache]
      */
     schemaCache: null,
-    
+
     /** api: config[version]
      *  ``String``
      *  If specified, the version string will be included in WMS GetCapabilities
      *  requests.  By default, no version is set.
      */
-    
+
     /** api: method[createStore]
      *
      *  Creates a store of layer records.  Fires "ready" when store is loaded.
@@ -138,15 +138,15 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             autoLoad: true,
             listeners: {
                 load: function() {
-                    // The load event is fired even if a bogus capabilities doc 
+                    // The load event is fired even if a bogus capabilities doc
                     // is read (http://trac.geoext.org/ticket/295).
-                    // Until this changes, we duck type a bad capabilities 
+                    // Until this changes, we duck type a bad capabilities
                     // object and fire failure if found.
                     if (!this.store.reader.raw || !this.store.reader.raw.service) {
                         this.fireEvent("failure", this, "Invalid capabilities document.");
                     } else {
                         if (!this.title) {
-                            this.title = this.store.reader.raw.service.title;                        
+                            this.title = this.store.reader.raw.service.title;
                         }
                         this.fireEvent("ready", this);
                     }
@@ -164,9 +164,9 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                 },
                 scope: this
             }
-        });        
+        });
     },
-    
+
     /** api: method[createLayerRecord]
      *  :arg config:  ``Object``  The application config for this layer.
      *  :returns: ``GeoExt.data.LayerRecord``
@@ -186,7 +186,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
              * of layers in different SRS.
              */
             var projection = this.getMapProjection();
-            
+
             // If the layer is not available in the map projection, find a
             // compatible projection that equals the map projection. This helps
             // us in dealing with the different EPSG codes for web mercator.
@@ -196,17 +196,17 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             var swapAxis = OpenLayers.Layer.WMS.prototype.reverseAxisOrder.call(
                 Ext.applyIf({map: this.target.mapPanel.map}, layer)
             );
-            var maxExtent = 
-                (nativeExtent && OpenLayers.Bounds.fromArray(nativeExtent.bbox, swapAxis)) || 
+            var maxExtent =
+                (nativeExtent && OpenLayers.Bounds.fromArray(nativeExtent.bbox, swapAxis)) ||
                 OpenLayers.Bounds.fromArray(original.get("llbbox")).transform(new OpenLayers.Projection("EPSG:4326"), projection);
-            
+
             // make sure maxExtent is valid (transform does not succeed for all llbbox)
             if (!(1 / maxExtent.getHeight() > 0) || !(1 / maxExtent.getWidth() > 0)) {
                 // maxExtent has infinite or non-numeric width or height
                 // in this case, the map maxExtent must be specified in the config
                 maxExtent = undefined;
             }
-            
+
             // use all params from original
             var params = Ext.applyIf({
                 STYLES: config.styles,
@@ -215,8 +215,8 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             }, layer.params);
 
             layer = new OpenLayers.Layer.WMS(
-                config.title || layer.name, 
-                layer.url, 
+                config.title || layer.name,
+                layer.url,
                 params, {
                     attribution: layer.attribution,
                     maxExtent: maxExtent,
@@ -240,10 +240,10 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                 selected: "selected" in config ? config.selected : false,
                 layer: layer
             }, original.data);
-            
+
             // add additional fields
             var fields = [
-                {name: "source", type: "string"}, 
+                {name: "source", type: "string"},
                 {name: "group", type: "string"},
                 {name: "properties", type: "string"},
                 {name: "fixed", type: "boolean"},
@@ -257,10 +257,10 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             record = new Record(data, layer.id);
 
         }
-        
+
         return record;
     },
-    
+
     /** api: method[getProjection]
      *  :arg layerRecord: ``GeoExt.data.LayerRecord`` a record from this
      *      source's store
@@ -289,7 +289,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         }
         return compatibleProjection;
     },
-    
+
     /** private: method[initDescribeLayerStore]
      *  creates a WMSDescribeLayer store for layer descriptions of all layers
      *  created from this source.
@@ -306,7 +306,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             });
         }
     },
-    
+
     /** api: method[describeLayer]
      *  :arg rec: ``GeoExt.data.LayerRecord`` the layer to issue a WMS
      *      DescribeLayer request for
@@ -365,7 +365,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             callback.call(scope, this.describeLayerStore.getAt(index));
         }
     },
-    
+
     /** api: method[getSchema]
      *  :arg rec: ``GeoExt.data.LayerRecord`` the WMS layer to issue a WFS
      *      DescribeFeatureType request for
@@ -419,7 +419,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             }
         }, this);
    },
-    
+
     /** api: method[getConfigForRecord]
      *  :arg record: :class:`GeoExt.data.LayerRecord`
      *  :returns: ``Object``
@@ -435,7 +435,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             styles: params.STYLES,
             transparent: params.TRANSPARENT
         });
-    }
+    },
 
     /** api: method[getStore]
      *  :returns: ``DataStore``
@@ -447,7 +447,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         return this.store;
     }
 
-    
+
 });
 
 Ext.preg(gxp.plugins.WMSSource.prototype.ptype, gxp.plugins.WMSSource);
