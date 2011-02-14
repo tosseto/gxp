@@ -200,7 +200,7 @@ gxp.PointSymbolizer = Ext.extend(Ext.Panel, {
                     '<tpl if="preview">' +
                         '<img src="{preview}" alt="{display}"/>' +
                     '</tpl>' +
-                    '<span>{display}|{value}|{preview}|{mark}</span>' +
+                    '<span>{display}</span>' +
                 '</div></tpl>'
             ),
             mode: "local",
