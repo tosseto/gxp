@@ -436,6 +436,17 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             transparent: params.TRANSPARENT
         });
     }
+
+    /** api: method[getStore]
+     *  :returns: ``DataStore``
+     *
+     *  Return the source datastore
+     */
+    getStore: function()
+    {
+        return this.store;
+    }
+
     
 });
 
