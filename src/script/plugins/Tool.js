@@ -70,6 +70,31 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
      *  ".fbar" has to be appended. The default is "map.tbar". The viewer's main 
      *  MapPanel can always be accessed with "map" as actionTarget. Set to null if 
      *  no actions should be created.
+     *
+     *  Some tools provide a context menu. To reference this context menu as
+     *  actionTarget for other tools, configure an id in the tool's
+     *  outputConfig, and use the id with ".contextMenu" appended. In the
+     *  snippet below, a layer tree is created, with a "Remove layer" action
+     *  as button on the tree's top toolbar, and as menu item in its context
+     *  menu:
+     *
+     *  .. code-block:: javascript
+     *
+     *     {
+     *         xtype: "gxp_layertree",
+     *         outputConfig: {
+     *             id: "tree",
+     *             tbar: []
+     *         }
+     *     }, {
+     *         xtype: "gxp_removelayer",
+     *         actionTarget: ["tree.tbar", "tree.contextMenu"]
+     *     }
+     *
+     *  If a tool has both actions and output, and you want to force it to
+     *  immediately output to a container, set actionTarget to null. If you
+     *  want to hide the actions, set actionTarget to false. In this case, you
+     *  should configure a defaultAction to make sure that an action is active.
      */
     actionTarget: "map.tbar",
         
@@ -111,6 +136,11 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
     /** private: property[actions]
      *  ``Array`` The actions this tool has added to viewer components.
      */
+    
+    /** private: property[output]
+     *  ``Array`` output added by this container
+     */
+    output: null,
      
     /** private: method[constructor]
      */
@@ -121,6 +151,7 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
         if (!this.id) {
             this.id = Ext.id();
         }
+        this.output = [];
         
         this.addEvents(
             /** api: event[activate]
@@ -147,6 +178,7 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
      *  :arg target: ``Object`` The object initializing this plugin.
      */
     init: function(target) {
+        target.tools[this.id] = this;
         this.target = target;
         this.autoActivate && this.activate();
         this.target.on("portalready", this.addActions, this);
@@ -185,7 +217,7 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
      */
     addActions: function(actions) {
         actions = actions || this.actions;
-        if (!actions) {
+        if (!actions || this.actionTarget === null) {
             // add output immediately if we have no actions to trigger it
             this.addOutput();
             return;
@@ -194,7 +226,7 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
         var actionTargets = this.actionTarget instanceof Array ?
             this.actionTarget : [this.actionTarget];
         var a = actions instanceof Array ? actions : [actions];
-        var actionTarget, i, j, jj, parts, ref, item, ct, meth, index = null;
+        var action, actionTarget, i, j, jj, parts, ref, item, ct, meth, index = null;
         for (i=actionTargets.length-1; i>=0; --i) {
             actionTarget = actionTargets[i];
             if (actionTarget) {
@@ -226,12 +258,17 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
             for (j=0, jj=a.length; j<jj; ++j) {
                 if (!(a[j] instanceof Ext.Action || a[j] instanceof Ext.Component)) {
                     if (typeof a[j] != "string") {
+                        if (j == this.defaultAction) {
+                            a[j].pressed = true;
+                        }
                         a[j] = new Ext.Action(a[j]);
                     }
                 }
                 action = a[j];
                 if (j == this.defaultAction && action instanceof GeoExt.Action) {
-                    action.activateOnEnable = true;
+                    action.isDisabled() ?
+                        action.activateOnEnable = true :
+                        action.control.activate();
                 }
                 if (ct) {
                     if (ct instanceof Ext.menu.Menu) {
@@ -247,8 +284,8 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
                         var cmp;
                         action.on("click", function() {
                             if (cmp) {
-                                cmp.ownerCt && cmp.ownerCt instanceof Ext.Window ?
-                                    cmp.ownerCt.show() : cmp.show();
+                                this.outputTarget ?
+                                    cmp.show() : cmp.ownerCt.ownerCt.show();
                             } else {
                                 cmp = this.addOutput();
                             }
@@ -286,11 +323,17 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
             }
             Ext.apply(config, this.outputConfig);
         } else {
+            var outputConfig = this.outputConfig || {};
             container = new Ext.Window(Ext.apply({
                 hideBorders: true,
                 shadow: false,
-                closeAction: "hide"
-            }, this.outputConfig)).show();
+                closeAction: "hide",
+                autoHeight: !outputConfig.height,
+                layout: outputConfig.height ? "fit" : undefined,
+                items: [{
+                    defaults: {autoHeight: !outputConfig.height}
+                }]
+            }, outputConfig)).show().items.get(0);
         }
         var component = container.add(config);            
         if (component instanceof Ext.Window) {
@@ -298,7 +341,29 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
         } else {
             container.doLayout();
         }
+        this.output.push(component);
         return component;
+    },
+    
+    /** api: method[removeOutput]
+     *  Removes all output created by this tool
+     */
+    removeOutput: function() {
+        var cmp;
+        for (var i=this.output.length-1; i>=0; --i) {
+            cmp = this.output[i];
+            if (!this.outputTarget) {
+                cmp.findParentBy(function(p) {
+                    return p instanceof Ext.Window;
+                }).close();
+            } else {
+                cmp.ownerCt.remove(cmp);
+                if (cmp.ownerCt instanceof Ext.Window) {
+                    cmp.ownerCt[cmp.ownerCt.closeAction]();
+                }
+            }
+        }
+        this.output = [];
     }
     
 });

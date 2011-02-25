@@ -53,7 +53,7 @@ gxp.EmbedMapDialog = Ext.extend(Ext.Container, {
      *  absolute one.
      */
     url: null,
-    
+
     /* begin i18n */
     /** api: config[publishMessage] ``String`` i18n */
     publishMessage: "Your map is ready to be published to the web! Simply copy the following HTML to embed the map in your website:",
@@ -91,12 +91,21 @@ gxp.EmbedMapDialog = Ext.extend(Ext.Container, {
         Ext.apply(this, this.getConfig());
         gxp.EmbedMapDialog.superclass.initComponent.call(this);
     },
+
+    /** api: method[getIframeHTML]
+     *  :returns: ``String`` the HTML needed to create the iframe
+     *
+     *  Get the HTML needed to created the iframe.
+     */
+    getIframeHTML: function() {
+        return this.snippetArea.getValue();
+    },
     
     /** private: method[updateSnippet]
      */
     updateSnippet: function() {
         this.snippetArea.setValue(
-            '<iframe height="' + this.heightField.getValue() +
+            '<iframe style="border: none;" height="' + this.heightField.getValue() +
             '" width="' + this.widthField.getValue() +'" src="' + 
             gxp.util.getAbsoluteUrl(this.url) + '"></iframe>'
         );
@@ -180,6 +189,8 @@ gxp.EmbedMapDialog = Ext.extend(Ext.Container, {
                 layout: "fit"
             },
             items: [{
+                items: [adjustments]
+            }, {
                 xtype: "box",
                 autoEl: {
                     tag: "p",
@@ -187,8 +198,6 @@ gxp.EmbedMapDialog = Ext.extend(Ext.Container, {
                 }
             }, {
                 items: [this.snippetArea]
-            }, {
-                items: [adjustments]
             }],
             listeners: {
                 "afterrender": this.updateSnippet,

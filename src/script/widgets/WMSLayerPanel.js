@@ -6,6 +6,11 @@
  * of the license.
  */
 
+/**
+ * @include widgets/WMSStylesDialog.js
+ * @include plugins/GeoServerStyleWriter.js
+ */
+
 /** api: (define)
  *  module = gxp
  *  class = WMSLayerPanel
@@ -26,6 +31,27 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
      *  Show properties for this layer record.
      */
     layerRecord: null,
+
+    /** api: config[source]
+     *  ``gxp.plugins.LayerSource``
+     *  Source for the layer. Optional. If not provided, ``sameOriginStyling``
+     *  will be ignored.
+     */
+    source: null,
+    
+    /** api: config[sameOriginStyling]
+     *  ``Boolean``
+     *  Only allow editing of styles for layers whose sources have a URL that
+     *  matches the origin of this applicaiton.  It is strongly discouraged to 
+     *  do styling through the proxy as all authorization headers and cookies 
+     *  are shared with all remotesources.  Default is ``true``.
+     */
+    sameOriginStyling: true,
+
+    /** private: property[editableStyles]
+     *  ``Boolean``
+     */
+    editableStyles: false,
     
     /** api: config[activeTab]
      *  ``String or Number``
@@ -58,6 +84,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
     transparentText: "Transparent",
     cacheText: "Cache",
     cacheFieldText: "Use cached version",
+    stylesText: "Styles",
     
     initComponent: function() {
         
@@ -77,6 +104,20 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         if (this.layerRecord.get("layer").params.TILED != null) {
             this.items.push(this.createCachePanel());
         }
+        
+        // only add the Styles panel if we know for sure that we have styles
+        if (this.layerRecord.get("styles")) {
+            var url = (this.source || this.layerRecord.get("layer")).url.split(
+                "?").shift().replace(/\/(wms|ows)\/?$/, "/rest");
+            if (this.sameOriginStyling) {
+                // this could be made more robust
+                // for now, only style for sources with relative url
+                this.editableStyles = url.charAt(0) === "/";
+            } else {
+                this.editableStyles = true;
+            }
+            this.items.push(this.createStylesPanel(url));
+        }
 
         gxp.WMSLayerPanel.superclass.initComponent.call(this);
     },
@@ -88,6 +129,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         return {
             title: this.cacheText,
             layout: "form",
+            style: "padding: 10px",
             items: [{
                 xtype: "checkbox",
                 fieldLabel: this.cacheFieldText,
@@ -104,6 +146,45 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                 }
             }]    
         };
+    },
+    
+    /** private: createStylesPanel
+     *  :arg url: ``String`` url to save styles to
+     *
+     *  Creates the Styles panel.
+     */
+    createStylesPanel: function(url) {
+        var config = gxp.WMSStylesDialog.createGeoServerStylerConfig(
+            this.layerRecord, url
+        );
+        return Ext.apply(config, {
+            title: this.stylesText,
+            style: "padding: 10px",
+            editable: false,
+            listeners: Ext.apply(config.listeners, {
+                "beforerender": {
+                    fn: function(cmp) {
+                        var render = !this.editableStyles;
+                        if (!render) {
+                            Ext.Ajax.request({
+                                method: "PUT",
+                                url: url + "/styles",
+                                callback: function(options, success, response) {
+                                    // we expect a 405 error code here if we are dealing with
+                                    // GeoServer and have write access. Otherwise we will
+                                    // create the panel in readonly mode.
+                                    cmp.editable = (response.status == 405);
+                                    cmp.ownerCt.doLayout();
+                                }
+                            });
+                        }
+                        return render;
+                    },
+                    scope: this,
+                    single: true
+                }
+            })
+        });
     },
     
     /** private: createAboutPanel
@@ -169,7 +250,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         }
         var formats = [];
         var currentFormat = layer.params["FORMAT"].toLowerCase();
-        Ext.each(this.layerRecord.get("formats"), function(format) {
+        Ext.each(record.get("formats"), function(format) {
             if(this.imageFormats.test(format)) {
                 formats.push(format.toLowerCase());
             }
@@ -179,7 +260,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         }
         var transparent = layer.params["TRANSPARENT"];
         transparent = (transparent === "true" || transparent === true);
-
+        
         return {
             title: this.displayText,
             style: {"padding": "10px"},

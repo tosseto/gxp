@@ -1,3 +1,71 @@
+.x-tree-node-leaf  .gx-tree-layer-icon {
+    background-image: url(img/geosilk/vector.png);
+}
+
+.x-tree-node-leaf  .gxp-tree-rasterlayer-icon {
+    background-image: url(img/geosilk/raster.png);
+}
+
+/* position the zoom slider within map panel */
+.gx-zoomslider {
+    top: 90px;
+    left: 17px
+}
+
+/* Pan- and Zoom- Panel Styles*/
+
+.olControlPanPanel div {
+    background-image:url(../../../../externals/ext/resources/images/gray/panel/tool-sprites.gif);
+    height:15px;
+    width:15px;
+    /* workaround for button height in IE */
+    font-size:0px;
+}
+
+.olControlPanPanel .olControlPanNorthItemInactive {
+    background-position:15px -60px;
+    left:16px
+}
+.olControlPanPanel .olControlPanEastItemInactive {
+    background-position:15px -120px;
+    left: 30px;
+    top: 16px;
+}
+.olControlPanPanel .olControlPanSouthItemInactive {
+    background-position:15px -75px;
+    left: 16px;
+    top: 32px;
+}
+.olControlPanPanel .olControlPanWestItemInactive {
+    background-position:15px -105px;
+    left: 2px;
+    top: 16px;
+}
+
+.olControlZoomPanel {
+    left:21px;
+}
+
+.olControlZoomPanel div {
+    background-image:url(../../../../externals/ext/resources/images/gray/panel/tool-sprites.gif);
+    height:15px;
+    width:15px;
+    /* workaround for button height in IE */
+    font-size:0px;
+}
+
+.olControlZoomPanel .olControlZoomInItemInactive {
+    background-position:15px -240px;
+}
+
+.olControlZoomPanel .olControlZoomToMaxExtentItemInactive {
+    display: none;
+}
+
+.olControlZoomPanel .olControlZoomOutItemInactive {
+    background-position:15px -255px;
+    top: 123px;
+}
 
 .x-btn .add {
     background-image: url(img/silk/add.png);
@@ -23,6 +91,10 @@
     background-image: url(img/pencil.png);
 }
 
+.x-btn .process, .x-menu-item .process {
+    background-image: url(img/silk/cog.png);
+}
+
 .gxp-filterbuilder .x-toolbar {
     background: transparent;
     border: none !important;
@@ -45,6 +117,11 @@
 }
 .gxp-legend-item {
     margin: 0.5em 10px;
+}
+
+/* gxp_print */
+.x-btn .gxp-icon-print, .x-menu-item .gxp-icon-print, .x-tree-node .gxp-icon-print {
+    background-image: url(img/silk/printer.png);
 }
 
 /* gxp_wmsgetfeatureinfo */
@@ -120,12 +197,16 @@
 }
 
 /* gxp_measure */
-.x-btn .gxp-icon-measure-length, .x-tree-node .gxp-icon-measure-length {
+.x-btn .gxp-icon-measure-length, .x-menu-item .gxp-icon-measure-length, .x-tree-node .gxp-icon-measure-length {
     background-image: url(img/geosilk/ruler.png) !important;
 }
-
-.x-btn .gxp-icon-measure-area, .x-btn .gxp-icon-measure-area {
+.x-btn .gxp-icon-measure-area, .x-menu-item .gxp-icon-measure-area, .x-tree-node .gxp-icon-measure-area {
    background-image: url(img/geosilk/ruler_square.png) !important;
+}
+
+/* gxp_styler */
+.x-btn .gxp-icon-palette, .x-menu-item .gxp-icon-palette, .x-tree-node .gxp-icon-palette {
+   background-image: url(img/silk/palette.png);
 }
 
 /* fixes textarea scrollbar issue in FF on OSX */
@@ -139,4 +220,35 @@
 
 .x-tree-node-expanded img.gxp-folder {
     background: url(../../../../externals/ext/resources/images/default/tree/folder-open.gif);
+}
+
+/* gxp_layeruploadpanel */
+.x-btn .gxp-icon-filebrowse { 
+    background-image: url(img/silk/folder.png);
+}
+
+/* ux.FileUploadField */
+.x-form-file-wrap {
+    position: relative;
+    height: 22px;
+}
+.x-form-file-wrap .x-form-file {
+    position: absolute;
+    right: 0;
+    -moz-opacity: 0;
+    filter:alpha(opacity: 0);
+    opacity: 0;
+    z-index: 2;
+    height: 22px;
+}
+.x-form-file-wrap .x-form-file-btn {
+    position: absolute;
+    right: 0;
+    z-index: 1;
+}
+.x-form-file-wrap .x-form-file-text {
+    position: absolute;
+    left: 0;
+    z-index: 3;
+    color: #777;
 }

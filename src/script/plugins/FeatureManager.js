@@ -8,6 +8,7 @@
 
 /**
  * @requires plugins/Tool.js
+ * @requires data/WFSFeatureStore.js
  */
 
 /** api: (define)
@@ -171,6 +172,8 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
              *
              *  * tool  - :class:`gxp.plugins.FeatureManager` this tool
              *  * store - :class:`gxp.data.WFSFeatureStore`
+             *  * filter - ``OpenLayers.Filter`` the filter argument passed to
+             *    the loadFeatures method
              */
             "query",
             
@@ -563,7 +566,7 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
                     this.clearFeatureStore();
                 } else {
                     var fields = [], geometryName;
-                    var geomRegex = /gml:((Multi)?(Point|Line|Polygon|Curve|Surface)).*/;
+                    var geomRegex = /gml:((Multi)?(Point|Line|Polygon|Curve|Surface|Geometry)).*/;
                     var types = {
                         "xsd:boolean": "boolean",
                         "xsd:int": "int",
@@ -576,7 +579,6 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
                         "xsd:double": "float"
                     };
                     schema.each(function(r) {
-                        // TODO: To be more generic, we would look for GeometryPropertyType as well.
                         var match = geomRegex.exec(r.get("type"));
                         if (match) {
                             geometryName = r.get("name");
@@ -625,7 +627,7 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
                                 this.redrawMatchingLayers(record);
                             },
                             "load": function() {
-                                this.fireEvent("query", this, this.featureStore);
+                                this.fireEvent("query", this, this.featureStore, this.filter);
                             },
                             scope: this
                         }

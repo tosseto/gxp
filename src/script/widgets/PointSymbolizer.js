@@ -90,21 +90,19 @@ gxp.PointSymbolizer = Ext.extend(Ext.Panel, {
         
         if(!this.symbolizer) {
             this.symbolizer = {};
-        }        
-
-        if (!this.pointGraphics)
-        {
+        }   
+        
+        if (!this.pointGraphics) {
             this.pointGraphics = [
-            {display: this.graphicCircleText, value: "circle", mark: true},
-            {display: this.graphicSquareText, value: "square", mark: true},
-            {display: this.graphicTriangleText, value: "triangle", mark: true},
-            {display: this.graphicStarText, value: "star", mark: true},
-            {display: this.graphicCrossText, value: "cross", mark: true},
-            {display: this.graphicXText, value: "x", mark: true},
-            {display: this.graphicExternalText}
+                {display: this.graphicCircleText, value: "circle", mark: true},
+                {display: this.graphicSquareText, value: "square", mark: true},
+                {display: this.graphicTriangleText, value: "triangle", mark: true},
+                {display: this.graphicStarText, value: "star", mark: true},
+                {display: this.graphicCrossText, value: "cross", mark: true},
+                {display: this.graphicXText, value: "x", mark: true},
+                {display: this.graphicExternalText}
             ];
         }
-
 
         this.external = !!this.symbolizer["externalGraphic"];
 

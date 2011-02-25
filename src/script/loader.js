@@ -17,6 +17,7 @@
         "widgets/FillSymbolizer.js",
         "widgets/StrokeSymbolizer.js",
         "widgets/PointSymbolizer.js",
+        "widgets/LayerUploadPanel.js",
         "widgets/LineSymbolizer.js",
         "widgets/PolygonSymbolizer.js",
         "widgets/RulePanel.js",
@@ -45,7 +46,10 @@
         "plugins/StyleWriter.js",
         "plugins/GeoServerStyleWriter.js",
         "plugins/Tool.js",
+        "plugins/ClickableFeatures.js",
+        "plugins/DeleteSelectedFeatures.js",
         "plugins/GoogleGeocoder.js",
+        "plugins/WMSFilterView.js",
         "plugins/WMSRasterStylesDialog.js",
         "plugins/WMSGetFeatureInfo.js",
         "plugins/FeatureEditor.js",
@@ -56,7 +60,9 @@
         "plugins/LayerTree.js",
         "plugins/AddLayers.js",
         "plugins/RemoveLayer.js",
+        "plugins/SelectedFeatureActions.js",
         "plugins/SnappingAgent.js",
+        "plugins/Styler.js",
         "plugins/NavigationHistory.js",
         "plugins/Zoom.js",
         "plugins/ZoomToExtent.js",
@@ -66,7 +72,8 @@
         "plugins/Measure.js",
         "plugins/Navigation.js",
         "plugins/LayerProperties.js",
-        "plugins/Legend.js"
+        "plugins/Legend.js",
+        "plugins/Print.js"
     );
     
     var scripts = document.getElementsByTagName("script");

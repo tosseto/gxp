@@ -7,7 +7,8 @@
  */
 
 /**
- * @requires plugins/Tool.js
+ * @requires plugins/ClickableFeatures.js
+ * @requires widgets/FeatureEditPopup.js
  */
 
 /** api: (define)
@@ -16,7 +17,7 @@
  */
 
 /** api: (extends)
- *  plugins/Tool.js
+ *  plugins/ClickableFeatures.js
  */
 Ext.namespace("gxp.plugins");
 
@@ -26,7 +27,7 @@ Ext.namespace("gxp.plugins");
  *    Plugin for feature editing. Requires a
  *    :class:`gxp.plugins.FeatureManager`.
  */   
-gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
+gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
     
     /** api: ptype = gxp_featureeditor */
     ptype: "gxp_featureeditor",
@@ -53,11 +54,10 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
      *  Modify feature text.
      */
 
-    /** api: config[featureManager]
-     *  ``String`` The id of the :class:`gxp.plugins.FeatureManager` to use
-     *  with this tool.
+    /** api: config[outputTarget]
+     *  ``String`` By default, the FeatureEditPopup will be added to the map.
      */
-    featureManager: null,
+    outputTarget: "map",
     
     /** api: config[snappingAgent]
      *  ``String`` Optional id of the :class:`gxp.plugins.SnappingAgent` to use
@@ -100,16 +100,11 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
      *  ``Array`` Optional list of field names (case sensitive) that are to be
      *  excluded from the property grid of the FeatureEditPopup.
      */
-    
+
     /** private: property[drawControl]
      *  ``OpenLayers.Control.DrawFeature``
      */
     drawControl: null,
-    
-    /** private: property[selectControl]
-     *  ``OpenLayers.Control.SelectFeature``
-     */
-    selectControl: null,
     
     /** private: property[popup]
      *  :class:`gxp.FeatureEditPopup` FeatureEditPopup for this tool
@@ -280,7 +275,8 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
                 var feature = evt.feature;
                 var featureStore = featureManager.featureStore;
                 if(this.selectControl.active) {
-                    popup = new gxp.FeatureEditPopup(Ext.apply({
+                    popup = this.addOutput({
+                        xtype: "gxp_featureeditpopup",
                         collapsible: true,
                         feature: feature,
                         vertexRenderIntent: "vertex",
@@ -335,9 +331,8 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
                             },
                             scope: this
                         }
-                    }, this.outputConfig));
+                    });
                     this.popup = popup;
-                    popup.show();
                 }
             },
             "sketchcomplete": function(evt) {
@@ -426,6 +421,11 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.Tool, {
             EXCEPTIONS: "application/vnd.ogc.se_xml",
             FEATURE_COUNT: 1
         }, layer.params);
+        if (typeof this.tolerance === "number") {
+            for (var i=0, ii=this.toleranceParameters.length; i<ii; ++i) {
+                params[this.toleranceParameters[i]] = this.tolerance;
+            }
+        }
         var projectionCode = map.getProjection();
         if (parseFloat(layer.params.VERSION) >= 1.3) {
             params.CRS = projectionCode;
