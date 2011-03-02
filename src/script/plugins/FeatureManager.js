@@ -496,13 +496,13 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
             if (callback) {
                 var me = this;
                 // unregister previous listener, if any
-                me._activeQuery && me.un("query", me._activeQuery)
+                me._activeQuery && me.un("query", me._activeQuery);
                 this.on("query", me._activeQuery = function(tool, store) {
                     delete me._activeQuery;
                     this.un("query", arguments.callee, this);
                     var len = store.getCount();
                     if (store.getCount() == 0) {
-                        callback.call(scope, [])
+                        callback.call(scope, []);
                     } else {
                         // wait until the features are added to the layer,
                         // so it is easier for listeners that e.g. want to
@@ -725,7 +725,8 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
                         // been the one for our location
                         condition.allowEmpty === false && this.setPage({
                             index: index % this.pages.length,
-                            allowEmpty: false
+                            allowEmpty: false,
+                            lonLat: new OpenLayers.LonLat(page.extent.right, page.extent.bottom)
                         });
                     } else if (this.pages.indexOf(page) == i) {
                         callback.call(this, page);
@@ -775,7 +776,7 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
      *  Gets the extent to use for the root of the paging quad-tree.
      */
     getPagingExtent: function(meth) {
-        layer = this.layerRecord.getLayer();
+        var layer = this.layerRecord.getLayer();
         var filter;
         if (this.filter instanceof OpenLayers.Filter.Spatial && this.filter.type === OpenLayers.Filter.Spatial.BBOX) {
             filter = this.filter;
@@ -915,11 +916,16 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
             return;
         }
         if (this.fireEvent("beforesetpage", this, condition, callback, scope) !== false) {
+            var maxExtent;
             if (!condition) {
                 // choose a page on the top left
                 var extent = this.getPagingExtent("getExtent");
+                maxExtent = this.getPagingExtent("getMaxExtent");
                 condition = {
-                    lonLat: new OpenLayers.LonLat(extent.left, extent.top),
+                    lonLat: new OpenLayers.LonLat(
+                        Math.max(maxExtent.left, extent.left),
+                        Math.min(maxExtent.top, extent.top)
+                    ),
                     allowEmpty: false
                 };
             }
@@ -931,7 +937,7 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
             this.page = null;
             if (!this.pages) {
                 var layer = this.layerRecord.getLayer();
-                var queryExtent = this.getPagingExtent("getMaxExtent");
+                var queryExtent = maxExtent || this.getPagingExtent("getMaxExtent");
                 this.pages = [{extent: queryExtent}];
                 condition.index = 0;
             } else if (condition.lonLat) {
