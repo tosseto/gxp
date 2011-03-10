@@ -346,12 +346,15 @@ gxp.RulePanel = Ext.extend(Ext.TabPanel, {
     
     /** private: method[getTextSymbolizer]
      *  Get the first text symbolizer in the rule.  If one does not exist,
-     *  create one.
+     *  create one.  If fonts property is defined, used first font as default.
      */
     getTextSymbolizer: function() {
         var symbolizer = this.hasTextSymbolizer();
         if (!symbolizer) {
             symbolizer = new OpenLayers.Symbolizer.Text();
+            if (this.fonts) {
+                symbolizer.fontFamily = this.fonts[0];
+            }
         }
         return symbolizer;
     },

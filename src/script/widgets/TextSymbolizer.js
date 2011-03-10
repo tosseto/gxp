@@ -114,7 +114,7 @@ gxp.TextSymbolizer = Ext.extend(Ext.Panel, {
                 xtype: "gxp_fontcombo",
                 fonts: this.fonts || undefined,
                 width: 110,
-                value: this.fonts ? this.fonts[0] : this.symbolizer.fontFamily,
+                value: this.symbolizer.fontFamily,
                 listeners: {
                     select: function(combo, record) {
                         this.symbolizer.fontFamily = record.get("field1");
