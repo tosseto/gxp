@@ -15,6 +15,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
      *  request.
      */
     baseParams: null,
+    title: 'GeoNode Source',
 
     /** i18n */
     noCompatibleSRSTitle: "Warning",
@@ -48,9 +49,9 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
         var record;
 
 
-
-            console.log('config:' + JSON.stringify(config))
-
+            console.log("IN GEONODE CREATELAYERRECORD");
+            console.log("CONFIG.LLBBOX:" + config['llbbox']);
+            console.log("CONFIG.BBOX:" + config['bbox']);
             /**
              * TODO: The WMSCapabilitiesReader should allow for creation
              * of layers in different SRS.
@@ -60,7 +61,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
             var maxExtent =
                 OpenLayers.Bounds.fromArray(config['llbbox']).transform(new OpenLayers.Projection("EPSG:4326"), projection);
 
-            console.log('MAXEXTENT:' + maxExtent);
+
             // make sure maxExtent is valid (transform does not succeed for all llbbox)
             if (!(1 / maxExtent.getHeight() > 0) || !(1 / maxExtent.getWidth() > 0)) {
                 // maxExtent has infinite or non-numeric width or height
@@ -92,28 +93,30 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
                     visibility: ("visibility" in config) ? config.visibility : true,
                     opacity: ("opacity" in config) ? config.opacity : 1,
                     buffer: ("buffer" in config) ? config.buffer : 1,
-                    projection: projection,
-                    queryable: config.queryable || false,
-                    disabled: config.disabled
+                    projection: projection
                 }
             );
 
             // data for the new record
             var data = {
                 title: config.title,
-                group: config.group,
+                name: config.name,
                 source: config.source,
+                group: config.group,
                 properties: "gxp_wmslayerpanel",
                 fixed: config.fixed,
                 selected: "selected" in config ? config.selected : false,
                 layer: layer,
                 queryable: config.queryable,
                 disabled: config.disabled,
-                abstract: config.abstract
+                abstract: config.abstract,
+                styles: config.styles
             };
 
             // add additional fields
             var fields = [
+                {name: "title", type: "string"},
+                {name: "name", type: "string"},
                 {name: "source", type: "string"},
                 {name: "group", type: "string"},
                 {name: "properties", type: "string"},
@@ -121,7 +124,8 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
                 {name: "selected", type: "boolean"},
                 {name: "queryable", type: "boolean"},
                 {name: 'disabled', type: 'boolean'},
-                {name: "abstract", type: "string"}
+                {name: "abstract", type: "string"},
+                {name: "styles"} //array
             ];
 
             var Record = GeoExt.data.LayerRecord.create(fields);
