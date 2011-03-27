@@ -49,9 +49,6 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
         var record;
 
 
-            console.log("IN GEONODE CREATELAYERRECORD");
-            console.log("CONFIG.LLBBOX:" + config['llbbox']);
-            console.log("CONFIG.BBOX:" + config['bbox']);
             /**
              * TODO: The WMSCapabilitiesReader should allow for creation
              * of layers in different SRS.
@@ -72,7 +69,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
             var params = {
                 STYLES: config.styles,
                 FORMAT: config.format,
-                TRANSPARENT: config.transparent,
+                TRANSPARENT:  ("transparent" in config) ? config.transparent : true,
                 LAYERS: config.name,
                 EXCEPTIONS: 'application/vnd.ogc.se_inimage',
                 VERSION: '1.1.1',
