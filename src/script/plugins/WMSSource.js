@@ -97,7 +97,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
     noCompatibleSRSText: "This layer cannot be added to the map since it is not available in any projection that is compatible with the map projection",
 
     /** private: property[format]
-     *  ``OpenLayers.Format`` Optional custom format to use on the 
+     *  ``OpenLayers.Format`` Optional custom format to use on the
      *  WMSCapabilitiesStore store instead of the default.
      */
     format: null,
@@ -137,10 +137,10 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         if (this.version) {
             baseParams.VERSION = this.version;
         }
-        
+
         this.store = new GeoExt.data.WMSCapabilitiesStore({
-            // Since we want our parameters (e.g. VERSION) to override any in the 
-            // given URL, we need to remove corresponding paramters from the 
+            // Since we want our parameters (e.g. VERSION) to override any in the
+            // given URL, we need to remove corresponding paramters from the
             // provided URL.  Simply setting baseParams on the store is also not
             // enough because Ext just tacks these parameters on to the URL - so
             // we get requests like ?Request=GetCapabilities&REQUEST=GetCapabilities
@@ -230,7 +230,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             // us in dealing with the different EPSG codes for web mercator.
             var layerProjection = this.getProjection(original);
             if (layerProjection === null) {
-                // show a message box that the layer cannot be added 
+                // show a message box that the layer cannot be added
                 Ext.Msg.show({
                     title: this.noCompatibleSRSTitle,
                     msg: this.noCompatibleSRSText,
