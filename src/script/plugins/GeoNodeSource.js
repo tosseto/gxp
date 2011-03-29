@@ -141,6 +141,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
      *
      *  Create a config object that can be used to recreate the given record.
      */
+
     getConfigForRecord: function(record) {
         var config = gxp.plugins.GeoNodeSource.superclass.getConfigForRecord.apply(this, arguments);
         var layer = record.getLayer();
@@ -148,19 +149,9 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
         return Ext.apply(config, {
             format: params.FORMAT,
             styles: params.STYLES,
-            transparent: params.TRANSPARENT,
-            exceptions: params.EXCEPTIONS,
-            name: params.LAYERS,
-            version: params.VERSION,
-            service: params.SERVICE,
-            request: params.REQUEST,
-            llbbox: params.LLBBOX,
-            url: params.URL,
-            queryable: record.get("queryable"),
-            disabled: record.get("disabled")
-
+            transparent: params.TRANSPARENT
         });
-    }
+    }    
 
 });
 

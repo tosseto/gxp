@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the BSD license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -20,12 +20,12 @@ Ext.namespace("gxp");
 
 /** api: constructor
  *  .. class:: WMSLayerPanel(config)
- *   
+ *
  *      Create a dialog for setting WMS layer properties like title, abstract,
  *      opacity, transparency and image format.
  */
 gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
-    
+
     /** api: config[layerRecord]
      *  ``GeoExt.data.LayerRecord``
      *  Show properties for this layer record.
@@ -38,12 +38,12 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
      *  will be ignored.
      */
     source: null,
-    
+
     /** api: config[sameOriginStyling]
      *  ``Boolean``
      *  Only allow editing of styles for layers whose sources have a URL that
-     *  matches the origin of this applicaiton.  It is strongly discouraged to 
-     *  do styling through the proxy as all authorization headers and cookies 
+     *  matches the origin of this applicaiton.  It is strongly discouraged to
+     *  do styling through the proxy as all authorization headers and cookies
      *  are shared with all remotesources.  Default is ``true``.
      */
     sameOriginStyling: true,
@@ -52,27 +52,27 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
      *  ``Boolean``
      */
     editableStyles: false,
-    
+
     /** api: config[activeTab]
      *  ``String or Number``
      *  A string id or the numeric index of the tab that should be initially
      *  activated on render.  Defaults to ``0``.
      */
     activeTab: 0,
-    
+
     /** api: config[border]
      *  ``Boolean``
      *  Display a border around the panel.  Defaults to ``false``.
      */
     border: false,
-    
+
     /** api: config[imageFormats]
      *  ``RegEx`` Regular expression used to test browser friendly formats for
      *  GetMap requests.  The formats displayed will those from the record that
      *  match this expression.  Default is ``/png|gif|jpe?g/i``.
      */
     imageFormats: /png|gif|jpe?g/i,
-    
+
     /** i18n */
     aboutText: "About",
     titleText: "Title",
@@ -85,9 +85,9 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
     cacheText: "Cache",
     cacheFieldText: "Use cached version",
     stylesText: "Styles",
-    
+
     initComponent: function() {
-        
+
         this.addEvents(
             /** api: event[change]
              *  Fires when the ``layerRecord`` is changed using this dialog.
@@ -104,7 +104,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         if (this.layerRecord.get("layer").params.TILED != null) {
             this.items.push(this.createCachePanel());
         }
-        
+
         // only add the Styles panel if we know for sure that we have styles
         if (this.layerRecord.get("styles")) {
             var url = (this.source || this.layerRecord.get("layer")).url.split(
@@ -144,10 +144,10 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                     },
                     scope: this
                 }
-            }]    
+            }]
         };
     },
-    
+
     /** private: createStylesPanel
      *  :arg url: ``String`` url to save styles to
      *
@@ -191,7 +191,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
             })
         });
     },
-    
+
     /** private: createAboutPanel
      *  Creates the about panel.
      */
@@ -242,7 +242,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
             }]
         };
     },
-    
+
     /** private: createDisplayPanel
      *  Creates the display panel.
      */
@@ -265,7 +265,22 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         }
         var transparent = layer.params["TRANSPARENT"];
         transparent = (transparent === "true" || transparent === true);
-        
+
+        var transCheck = {
+                xtype: "checkbox",
+                fieldLabel: this.transparentText,
+                checked: transparent,
+                listeners: {
+                    check: function(checkbox, checked) {
+                        layer.mergeNewParams({
+                            transparent: checked ? "true" : "false"
+                        });
+                        this.fireEvent("change");
+                    },
+                    scope: this
+                }
+        };
+
         return {
             title: this.displayText,
             style: {"padding": "10px"},
@@ -302,29 +317,17 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                         layer.mergeNewParams({
                             format: format
                         });
-                        Ext.getCmp('transparent').setDisabled(format == "image/jpeg");
+                        transCheck.setDisabled(format == "image/jpeg");
                         this.fireEvent("change");
                     },
                     scope: this
                 }
-            }, {
-                xtype: "checkbox",
-                id: 'transparent',
-                fieldLabel: this.transparentText,
-                checked: transparent,
-                listeners: {
-                    check: function(checkbox, checked) {
-                        layer.mergeNewParams({
-                            transparent: checked ? "true" : "false"
-                        });
-                        this.fireEvent("change");
-                    },
-                    scope: this
-                }
-            }]
+            },
+            transCheck
+            ]
         };
-    }    
+    }
 
 });
 
-Ext.reg('gxp_wmslayerpanel', gxp.WMSLayerPanel); 
+Ext.reg('gxp_wmslayerpanel', gxp.WMSLayerPanel);
