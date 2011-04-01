@@ -32,6 +32,12 @@ GeoExt.Lang.add("fr", {
         nextPageTip: "Page suivante",
         nextPageTip: "Dernière page"
     },
+
+    "gxp.plugins.GoogleEarth.prototype": {
+        apiKeyPrompt: "Please enter the Google API key for ",
+        menuText: "Passer à la visionneuse 3D",
+        tooltip: "Passer à la visionneuse 3D"
+    },
     
     "gxp.plugins.GoogleSource.prototype": {
         title: "Calques Google",
@@ -116,11 +122,6 @@ GeoExt.Lang.add("fr", {
     "gxp.plugins.WMSGetFeatureInfo.prototype": {
         infoActionTip: "Get Feature Info",
         popupTitle: "entité Info"
-    },
-
-    "gxp.plugins.WMSSource.prototype": {
-        noCompatibleSRSTitle: "Warning",
-        noCompatibleSRSText: "This layer cannot be added to the map since it is not available in any projection that is compatible with the map projection"
     },
 
     "gxp.plugins.Zoom.prototype": {

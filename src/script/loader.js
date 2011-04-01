@@ -49,6 +49,7 @@
         "plugins/ClickableFeatures.js",
         "plugins/DeleteSelectedFeatures.js",
         "plugins/GoogleGeocoder.js",
+        "plugins/GoogleEarth.js",
         "plugins/WMSFilterView.js",
         "plugins/WMSRasterStylesDialog.js",
         "plugins/WMSGetFeatureInfo.js",
@@ -83,31 +84,17 @@
     parts.pop();
     var path = parts.join("/");
 
-    var appendable = !(/MSIE/.test(navigator.userAgent) ||
-                       /Safari/.test(navigator.userAgent));
-    var pieces = new Array(jsfiles.length);
+    var len = jsfiles.length;
+    var pieces = new Array(len);
 
-    var element = document.getElementsByTagName("head").length ?
-                    document.getElementsByTagName("head")[0] :
-                    document.body;
-    var script, src;
-
-    for(var i=0; i<jsfiles.length; i++) {
-        src = path + "/" + jsfiles[i];
-        if(!appendable) {
-            pieces[i] = "<script src='" + src + "'></script>"; 
-        } else {
-            script = document.createElement("script");
-            script.src = src;
-            element.appendChild(script);
-        }
+    for (var i=0; i<len; i++) {
+        pieces[i] = "<script src='" + path + "/" + jsfiles[i] + "'></script>"; 
     }
-    if(!appendable) {
-        document.write(pieces.join(""));
-    }
+    document.write(pieces.join(""));
     
     if (GeoExt.Lang) {
         GeoExt.Lang.set(OpenLayers.Util.getParameters()["lang"] || GeoExt.Lang.locale);
     }
 
 })();
+

@@ -25,8 +25,15 @@
  */
 (function() {
     function keepRaw(data) {
+        var format = this.meta.format;
         if (typeof data === "string" || data.nodeType) {
-            data = this.meta.format.read(data);
+            data = format.read(data);
+            // cache the data for the single read that readRecord does
+            var origRead = format.read;
+            format.read = function() {
+                format.read = origRead;
+                return data;
+            };
         }
         // here is the new part
         this.raw = data;
@@ -91,10 +98,6 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      *  request.
      */
     baseParams: null,
-
-    /** i18n */
-    noCompatibleSRSTitle: "Warning",
-    noCompatibleSRSText: "This layer cannot be added to the map since it is not available in any projection that is compatible with the map projection",
 
     /** private: property[format]
      *  ``OpenLayers.Format`` Optional custom format to use on the
@@ -229,23 +232,12 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             // compatible projection that equals the map projection. This helps
             // us in dealing with the different EPSG codes for web mercator.
             var layerProjection = this.getProjection(original);
-            if (layerProjection === null) {
-                // show a message box that the layer cannot be added
-                Ext.Msg.show({
-                    title: this.noCompatibleSRSTitle,
-                    msg: this.noCompatibleSRSText,
-                    buttons: Ext.Msg.OK,
-                    icon: Ext.MessageBox.WARNING
-                });
-                return null;
-            }
 
-            var nativeExtent = original.get("bbox")[projection.getCode()];
-            var swapAxis = OpenLayers.Layer.WMS.prototype.reverseAxisOrder.call(
-                Ext.applyIf({map: this.target.mapPanel.map}, layer)
-            );
-            var maxExtent =
-                (nativeExtent && OpenLayers.Bounds.fromArray(nativeExtent.bbox, swapAxis)) ||
+            var projCode = projection.getCode();
+            var nativeExtent = original.get("bbox")[projCode];
+            var swapAxis = layer.params.VERSION >= "1.3" && !!layer.yx[projCode];
+            var maxExtent = 
+                (nativeExtent && OpenLayers.Bounds.fromArray(nativeExtent.bbox, swapAxis)) || 
                 OpenLayers.Bounds.fromArray(original.get("llbbox")).transform(new OpenLayers.Projection("EPSG:4326"), projection);
 
             // make sure maxExtent is valid (transform does not succeed for all llbbox)

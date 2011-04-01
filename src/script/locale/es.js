@@ -40,6 +40,12 @@ GeoExt.Lang.add("es", {
         nextPageTip: "Página siguiente",
         nextPageTip: "Última página"
     },
+
+    "gxp.plugins.GoogleEarth.prototype": {
+        apiKeyPrompt: "Please enter the Google API key for ",
+        menuText: "Vista 3D",
+        tooltip: "Vista 3D"
+    },
     
     "gxp.plugins.GoogleSource.prototype": {
         title: "Capas Google",
@@ -133,11 +139,6 @@ GeoExt.Lang.add("es", {
     "gxp.plugins.WMSGetFeatureInfo.prototype": {
         infoActionTip: "Consultar elementos",
         popupTitle: "Información de elementos"
-    },
-
-    "gxp.plugins.WMSSource.prototype": {
-        noCompatibleSRSTitle: "Warning",
-        noCompatibleSRSText: "This layer cannot be added to the map since it is not available in any projection that is compatible with the map projection"
     },
 
     "gxp.plugins.Zoom.prototype": {

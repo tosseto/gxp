@@ -40,6 +40,12 @@ GeoExt.Lang.add("en", {
         nextPageTip: "Next page",
         nextPageTip: "Last page"
     },
+
+    "gxp.plugins.GoogleEarth.prototype": {
+        apiKeyPrompt: "Please enter the Google API key for ",
+        menuText: "3D Viewer",
+        tooltip: "Switch to 3D Viewer"
+    },
     
     "gxp.plugins.GoogleSource.prototype": {
         title: "Google Layers",
@@ -134,11 +140,6 @@ GeoExt.Lang.add("en", {
     "gxp.plugins.WMSGetFeatureInfo.prototype": {
         infoActionTip: "Get Feature Info",
         popupTitle: "Feature Info"
-    },
-
-    "gxp.plugins.WMSSource.prototype": {
-        noCompatibleSRSTitle: "Warning",
-        noCompatibleSRSText: "This layer cannot be added to the map since it is not available in any projection that is compatible with the map projection"
     },
 
     "gxp.plugins.Zoom.prototype": {
