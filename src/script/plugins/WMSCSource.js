@@ -85,7 +85,7 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
         var caps = this.store.reader.raw.capability;
         var tileSets = (caps && caps.vendorSpecific && caps.vendorSpecific) ? 
             caps.vendorSpecific.tileSets : null;
-        if (tileSets !== null) {
+        if (tileSets !== null && record != null) {
             for (var i=0, len=tileSets.length; i<len; i++) {
                 var tileSet = tileSets[i];
                 var layer = record.get("layer");
