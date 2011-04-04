@@ -118,8 +118,18 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
         return Ext.apply(config, {
             tiled: !!record.getLayer().params.TILED
         });
+    },
+
+    /** api: method[getStore]
+     *  :returns: ``DataStore``
+     *
+     *  Return the source datastore
+     */
+    getStore: function()
+    {
+        return this.store;
     }
-    
+
 });
 
 Ext.preg(gxp.plugins.WMSCSource.prototype.ptype, gxp.plugins.WMSCSource);
