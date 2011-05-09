@@ -86,52 +86,84 @@ gxp.plugins.Styler = Ext.extend(gxp.plugins.Tool, {
             },
             scope: this
         }]);
-
-        this.target.on("layerselectionchange", function(record) {
-            var editableStyles = false;
-            var source = this.target.getSource(record);
-            if (source instanceof gxp.plugins.WMSSource) {
-                source.describeLayer(record, function(rec) {
-                    var owsTypes = ["WFS"];
-                    if (this.rasterStyling === true) {
-                        owsTypes.push("WCS");
-                    }
-                    if (rec && owsTypes.indexOf(rec.get("owsType")) !== -1) {
-                        if (record && record.get("styles")) {
-                            var source = this.target.layerSources[record.get("source")];
-                            var url = source.url.split(
-                                "?").shift().replace(/\/(wms|ows)\/?$/, "/rest");
-                            if (this.sameOriginStyling) {
-                                // this could be made more robust
-                                // for now, only style for sources with relative url
-                                editableStyles = url.charAt(0) === "/";
-                            } else {
-                                editableStyles = true;
-                            }
-                        }
-                        if (editableStyles) {
-                            var authorized = this.target.isAuthorized();
-                            if (typeof authorized == "boolean") {
-                                actions[0].setDisabled(!authorized);
-                            } else {
-                                Ext.Ajax.request({
-                                    method: "PUT",
-                                    url: url + "/styles",
-                                    callback: function(options, success, response) {
-                                        // we expect a 405 error code here if we are dealing
-                                        // with GeoServer and have write access.
-                                        actions[0].setDisabled(response.status != 405);                        
-                                    }
-                                });
-                            }
-                        }
-                    }
-                }, this);
-            }
-            editableStyles || actions[0].disable();
-        }, this);
+        
+        this.launchAction = actions[0];
+        this.target.on({
+            layerselectionchange: this.handleLayerChange,
+            scope: this
+        });
         
         return actions;
+    },
+    
+    /** private: method[handleLayerChange]
+     *  :arg record: ``GeoExt.data.LayerRecord``
+     *
+     *  Handle changes to the target viewer's selected layer.
+     */
+    handleLayerChange: function(record) {
+        this.launchAction.disable();
+        if (record && record.get("styles")) {
+            var source = this.target.getSource(record);
+            if (source instanceof gxp.plugins.WMSSource) {
+                source.describeLayer(record, function(describeRec) {
+                    this.checkIfStyleable(record, describeRec);
+                }, this);
+            }
+        }
+    },
+
+    /** private: method[checkIfStyleable]
+     *  :arg layerRec: ``GeoExt.data.LayerRecord``
+     *  :arg describeRec: ``Ext.data.Record`` Record from a 
+     *      `GeoExt.data.DescribeLayerStore``.
+     *
+     *  Given a layer record and the corresponding describe layer record, 
+     *  determine if the target layer can be styled.  If so, enable the launch 
+     *  action.
+     */
+    checkIfStyleable: function(layerRec, describeRec) {
+        var owsTypes = ["WFS"];
+        if (this.rasterStyling === true) {
+            owsTypes.push("WCS");
+        }
+        if (describeRec && owsTypes.indexOf(describeRec.get("owsType")) !== -1) {
+            var editableStyles = false;
+            var source = this.target.layerSources[layerRec.get("source")];
+            var url = source.url.split("?")
+                .shift().replace(/\/(wms|ows)\/?$/, "/rest/styles");
+            if (this.sameOriginStyling) {
+                // this could be made more robust
+                // for now, only style for sources with relative url
+                editableStyles = url.charAt(0) === "/";
+            } else {
+                editableStyles = true;
+            }
+            if (editableStyles) {
+                if (this.target.isAuthorized()) {
+                    // check if service is available
+                    this.enableActionIfAvailable(url);
+                }
+            }
+        }
+    },
+    
+    /** private: method[enableActionIfAvailable]
+     *  :arg url: ``String`` URL of style service
+     * 
+     *  Enable the launch action if the service is available.
+     */
+    enableActionIfAvailable: function(url) {
+        Ext.Ajax.request({
+            method: "PUT",
+            url: url,
+            callback: function(options, success, response) {
+                // we expect a 405 error code here if we are dealing
+                // with GeoServer and have write access.
+                this.launchAction.setDisabled(response.status !== 405);                        
+            },
+            scope: this
+        });
     },
     
     addOutput: function(config) {

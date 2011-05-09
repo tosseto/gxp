@@ -32,17 +32,22 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
     /** api: ptype = gxp_addlayers */
     ptype: "gxp_addlayers",
     
-    /** api: config[addMenuText]
+    /** api: config[addActionMenuText]
      *  ``String``
      *  Text for add menu item (i18n).
      */
-    addMenuText: "Add layers",
+    addActionMenuText: "Add layers",
 
     /** api: config[addActionTip]
      *  ``String``
      *  Text for add action tooltip (i18n).
      */
     addActionTip: "Add layers",
+    
+    /** api: config[addActionText]
+     *  ``String``
+     *  Text for the Add action. None by default.
+     */
    
     /** api: config[addServerText]
      *  ``String``
@@ -91,6 +96,12 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      *  Text for the layer selection (i18n).
      */
     layerSelectionText: "View available data from:",
+    
+    /** api: config[instructionsText]
+     *  ``String``
+     *  Text for additional instructions at the bottom of the grid (i18n).
+     *  None by default.
+     */
     
     /** api: config[doneText]
      *  ``String``
@@ -162,6 +173,8 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         var selectedLayer;
         var actions = gxp.plugins.AddLayers.superclass.addActions.apply(this, [{
             tooltip : this.addActionTip,
+            text: this.addActionText,
+            menuText: this.addActionMenuText,
             disabled: true,
             iconCls: "gxp-icon-addlayers",
             handler : this.showCapabilitiesGrid,
@@ -233,9 +246,8 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 
         var capGridPanel = new Ext.grid.GridPanel({
             store: this.target.layerSources[data[idx][0]].store,
-            layout: "fit",
-            region: "center",
             autoScroll: true,
+            flex: 1,
             autoExpandColumn: "title",
             plugins: [expander],
             colModel: new Ext.grid.ColumnModel([
@@ -321,6 +333,25 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             }
         });
         
+        var items = {
+            xtype: "container",
+            region: "center",
+            layout: "vbox",
+            items: [capGridPanel]
+        };
+        if (this.instructionsText) {
+            items.items.push({
+                xtype: "box",
+                autoHeight: true,
+                autoEl: {
+                    tag: "p",
+                    cls: "x-form-item",
+                    style: "padding-left: 5px; padding-right: 5px"
+                },
+                html: this.instructionsText
+            });
+        }
+        
         var bbarItems = [
             "->",
             new Ext.Button({
@@ -343,14 +374,15 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             bbarItems.unshift(uploadButton);
         }
 
-        this.capGrid = new Ext.Window({
+        //TODO use addOutput here instead of just applying outputConfig
+        this.capGrid = new Ext.Window(Ext.apply({
             title: this.availableLayersText,
             closeAction: "hide",
             layout: "border",
             height: 300,
             width: 450,
             modal: true,
-            items: [capGridPanel],
+            items: items,
             tbar: capGridToolbar,
             bbar: bbarItems,
             listeners: {
@@ -362,7 +394,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 },
                 scope: this
             }
-        });
+        }, this.initialConfig.outputConfig));
         
     },
     
@@ -431,7 +463,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                                         // grid view has not refreshed yet
                                         window.setTimeout(function() {
                                             gridPanel.getView().focusRow(last);
-                                        }, 1);
+                                        }, 100);
                                     },
                                     scope: this
                                 });
@@ -477,20 +509,17 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                     button.hide();
                     var show = false;
                     if (this.isEligibleForUpload(source)) {
-                        var authorized = this.target.isAuthorized();
-                        if (typeof authorized == "boolean") {
-                            button.setVisible(authorized);
-                        } else {
-                            // only works with GeoServer
-                            // if url is http://example.com/geoserver/ows, we
-                            // want http://example.com/geoserver/rest.
-                            var parts = source.url.split("/");
-                            parts.pop();
-                            parts.push("rest");
-                            // this sets the url for the layer upload panel
-                            url = parts.join("/");
-                            // only show button if upload URL returns a 405 for
-                            // GET
+                        // only works with GeoServer
+                        // if url is http://example.com/geoserver/ows, we
+                        // want http://example.com/geoserver/rest.
+                        var parts = source.url.split("/");
+                        parts.pop();
+                        parts.push("rest");
+                        // this sets the url for the layer upload panel
+                        url = parts.join("/");
+                        if (this.target.isAuthorized()) {
+                            // determine availability of upload functionality based
+                            // on a 405 for GET
                             getStatus(url + "/upload", function(status) {
                                 button.setVisible(status === 405);
                             }, this);

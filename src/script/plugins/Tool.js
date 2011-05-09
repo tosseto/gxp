@@ -145,7 +145,7 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
     /** private: method[constructor]
      */
     constructor: function(config) {
-        this.initialConfig = config;
+        this.initialConfig = config || {};
         this.active = false;
         Ext.apply(this, config);
         if (!this.id) {
@@ -275,8 +275,14 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
                         action = Ext.apply(new Ext.menu.Item(action),
                             {text: action.initialConfig.menuText}
                         );
+                    } else if (!(ct instanceof Ext.Toolbar)) {
+                        // only Ext.menu.Menu and Ext.Toolbar containers
+                        // support the Action interface. So if our container is
+                        // something else, we create a button with the action.
+                        action = new Ext.Button(action);
                     }
-                    action = (index === null) ? ct.add(action) : ct.insert(index, action);
+                    var addedAction = (index === null) ? ct.add(action) : ct.insert(index, action);
+                    action = action instanceof Ext.Button ? action : addedAction;
                     if (index !== null) {
                         index += 1;
                     }
@@ -305,6 +311,14 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
     },
     
     /** api: method[addOutput]
+     *  :arg config: ``Object`` configuration for the ``Ext.Component`` to be
+     *      added to the ``outputTarget``. Properties of this configuration
+     *      will be overridden by the applications ``outputConfig`` for the
+     *      tool instance.
+     *  :return: ``Ext.Component`` The component added to the ``outputTarget``. 
+     *
+     *  Adds output to the tool's ``outputTarget``. This method is meant to be
+     *  called and/or overridden by subclasses.
      */
     addOutput: function(config) {
         if (!config && !this.outputConfig) {

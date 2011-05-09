@@ -6,7 +6,7 @@ GeoExt.Lang.add("ca", {
     },
     
     "gxp.plugins.AddLayers.prototype": {
-        addMenuText: "Afegeix Capes",
+        addActionMenuText: "Afegeix Capes",
         addActionTip: "Afegeix Capes",
         addServerText: "Afegeix servidor",
         addButtonText: "Afegeix Capes",
@@ -38,7 +38,8 @@ GeoExt.Lang.add("ca", {
         previousPageTip: "Pàgina anterior",
         zoomPageExtentTip: "Ajusta vista a l'extensió de la pàgina",
         nextPageTip: "Pàgina següent",
-        nextPageTip: "Pàgina anterior"
+        nextPageTip: "Pàgina anterior",
+        totalMsg: "Total: {0} records"
     },
 
     "gxp.plugins.GoogleEarth.prototype": { 
@@ -344,6 +345,7 @@ GeoExt.Lang.add("ca", {
         title: "Afegeix Servidor...",
         cancelText: "Cancel·la",
         addServerText: "Afegeix Servidor",
+        invalidURLText: "Enter a valid URL to a WMS endpoint (e.g. http://example.com/geoserver/wms)",
         contactingServerText: "Connectant amb el Servidor..."
     },
 

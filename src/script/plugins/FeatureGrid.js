@@ -37,6 +37,12 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
      *  ``GeoExt.data.AttributeStore``
      */
     schema: null,
+
+    /** api: config[showTotalResults]
+     *  ``Boolean`` If set to true, the total number of records will be shown
+     *  in the bottom toolbar of the grid, if available.
+     */
+    showTotalResults: false,
     
     /** api: config[alwaysDisplayOnMap]
      *  ``Boolean`` If set to true, the features that are shown in the grid
@@ -110,6 +116,26 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
      *  Tooltip string for last page action (i18n).
      */
     lastPageTip: "Last page",
+
+    /** api: config[totalMsg]
+     *  ``String``
+     *  String template for showing total number of records (i18n).
+     */
+    totalMsg: "Total: {0} records",
+
+    /** private: method[displayTotalResults]
+     */
+    displayTotalResults: function() {
+        var featureManager = this.target.tools[this.featureManager];
+        if (this.showTotalResults === true && featureManager.numberOfFeatures !== null) {
+            this.displayItem.setText(
+                String.format(
+                    this.totalMsg,
+                    featureManager.numberOfFeatures
+                )
+            );
+        }
+    },
     
     /** api: method[addOutput]
      */
@@ -154,6 +180,7 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
                 }
             };
         }
+        this.displayItem = new Ext.Toolbar.TextItem({});
         config = Ext.apply({
             xtype: "gxp_featuregrid",
             sm: new GeoExt.grid.FeatureSelectionModel(smCfg),
@@ -181,7 +208,7 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
                 disabled: true,
                 hidden: featureManager.autoZoomPage,
                 handler: function() {
-                    map.zoomToExtent(featureManager.page.extent);
+                    map.zoomToExtent(featureManager.getPageExtent());
                 }
             }, {
                 iconCls: "x-tbar-page-next",
@@ -199,7 +226,7 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
                 handler: function() {
                     featureManager.setPage({index: "last"});
                 }
-            }] : []).concat(["->"].concat(!this.alwaysDisplayOnMap ? [{
+            }, {xtype: 'tbspacer', width: 10}, this.displayItem] : []).concat(["->"].concat(!this.alwaysDisplayOnMap ? [{
                 text: this.displayFeatureText,
                 enableToggle: true,
                 toggleHandler: function(btn, pressed) {
@@ -211,11 +238,13 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
             listeners: {
                 "added": function(cmp, ownerCt) {
                     var onClear = (function() {
+                        this.displayTotalResults();
                         this.selectOnMap && this.selectControl.deactivate();
                         this.autoCollapse && typeof ownerCt.collapse == "function" &&
                             ownerCt.collapse();
                     }).bind(this);
                     var onPopulate = (function() {
+                        this.displayTotalResults();
                         this.selectOnMap && this.selectControl.activate();
                         this.autoExpand && typeof ownerCt.expand == "function" &&
                             ownerCt.expand();
@@ -247,17 +276,23 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
         if (this.alwaysDisplayOnMap || this.selectOnMap) {
             featureManager.showLayer(this.id, this.displayMode);
         }
-        
-        featureManager.paging && featureManager.on("setpage", function(mgr) {
-            var paging = mgr.pages && mgr.pages.length;
-            featureGrid.zoomToPageButton.setDisabled(!paging);
-            var prev = paging && mgr.pages.indexOf(mgr.page) !== 0;
-            featureGrid.firstPageButton.setDisabled(!prev);
-            featureGrid.prevPageButton.setDisabled(!prev);
-            var next = paging && mgr.pages.indexOf(mgr.page) !== mgr.pages.length - 1;
-            featureGrid.lastPageButton.setDisabled(!next);
-            featureGrid.nextPageButton.setDisabled(!next);
-        }, this);
+       
+        featureManager.paging && featureManager.on({
+            "beforesetpage": function() {
+                featureGrid.zoomToPageButton.disable();
+            },
+            "setpage": function(mgr, condition, callback, scope, pageIndex, numPages) {
+                var paging = (numPages > 0);
+                featureGrid.zoomToPageButton.setDisabled(!paging);
+                var prev = (paging && (pageIndex !== 0));
+                featureGrid.firstPageButton.setDisabled(!prev);
+                featureGrid.prevPageButton.setDisabled(!prev);
+                var next = (paging && (pageIndex !== numPages-1));
+                featureGrid.lastPageButton.setDisabled(!next);
+                featureGrid.nextPageButton.setDisabled(!next);
+            },
+            scope: this
+        });
                 
         featureManager.on("layerchange", function(mgr, rec, schema) {
             //TODO use schema instead of store to configure the fields

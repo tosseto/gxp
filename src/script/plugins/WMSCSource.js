@@ -86,21 +86,28 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
         var tileSets = (caps && caps.vendorSpecific && caps.vendorSpecific) ? 
             caps.vendorSpecific.tileSets : null;
         if (tileSets !== null && record != null) {
+            var layer = record.get("layer");
+            var mapProjection = this.getMapProjection();
+            // look for tileset with same name and equivalent projection
             for (var i=0, len=tileSets.length; i<len; i++) {
                 var tileSet = tileSets[i];
-                var layer = record.get("layer");
-                var srs = null; 
-                for (var key in tileSet.srs) {
-                    srs = key;
-                }
-                if (tileSet.layers === layer.params.LAYERS && 
-                    srs === this.getMapProjection().getCode()) {
-                        var bbox = tileSet.bbox[srs].bbox;
-                        layer.addOptions({resolutions: tileSet.resolutions,
-                            tileSize: new OpenLayers.Size(tileSet.width, tileSet.height),
-                            tileOrigin: new OpenLayers.LonLat(bbox[0], bbox[1])});
-                        layer.params.TILED = config.tiled || false; // set to true when http://projects.opengeo.org/suite/ticket/1286 is closed
+                if (tileSet.layers === layer.params.LAYERS) {
+                    var tileProjection;
+                    for (var srs in tileSet.srs) {
+                        tileProjection = new OpenLayers.Projection(srs);
                         break;
+                    }
+                    if (mapProjection.equals(tileProjection)) {
+                        var bbox = tileSet.bbox[srs].bbox;
+                        layer.addOptions({
+                            resolutions: tileSet.resolutions,
+                            tileSize: new OpenLayers.Size(tileSet.width, tileSet.height),
+                            tileOrigin: new OpenLayers.LonLat(bbox[0], bbox[1])
+                        });
+                        // unless explicitly configured otherwise, use cached version
+                        layer.params.TILED = (config.cached !== false) && true;
+                        break;
+                    }
                 }
             }
         }
@@ -115,8 +122,10 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
      */
     getConfigForRecord: function(record) {
         var config = gxp.plugins.WMSCSource.superclass.getConfigForRecord.apply(this, arguments);
+        // the "tiled" property is already used to indicate singleTile
+        // the "cached" property will indicate whether to send the TILED param
         return Ext.apply(config, {
-            tiled: !!record.getLayer().params.TILED
+            cached: !!record.getLayer().params.TILED
         });
     },
 

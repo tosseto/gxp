@@ -82,6 +82,12 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      *  info tool, without editing capabilities. Default is false.
      */
     readOnly: false,
+
+    /** api: config[modifyOnly]
+     *  ``Boolean`` Set to true to use the FeatureEditor merely as a feature
+     *  modify tool, i.e. there is no option to add new features.
+     */
+    modifyOnly: false,
     
     /** api: config[autoLoadFeatures]
      *  ``Boolean`` Should this tool load features on click? If set to true,
@@ -387,7 +393,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
             text: this.createFeatureActionText,
             iconCls: this.iconClsAdd,
             disabled: true,
-            hidden: this.readOnly,
+            hidden: this.modifyOnly || this.readOnly,
             toggleGroup: toggleGroup,
             enableToggle: true,
             allowDepress: true,
@@ -419,13 +425,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      */
     onLayerChange: function(mgr, layer, schema) {
         this.schema = schema;
-        var disable;
-        var authorized = this.target.isAuthorized();
-        if (typeof authorized == "boolean") {
-            disable = (!schema || !authorized);
-        } else {
-            disable = !schema;
-        }
+        var disable = !schema || !this.target.isAuthorized();
         this.actions[0].setDisabled(disable);
         this.actions[1].setDisabled(disable);
         if (disable) {
@@ -460,8 +460,16 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
         } else {
             button.disable();
         }
-    }
+    },
     
+    /** private: method[select]
+     *  :arg feature: ``OpenLayers.Feature.Vector``
+     */
+    select: function(feature) {
+        this.selectControl.unselectAll(
+            this.popup && this.popup.editing && {except: this.popup.feature});
+        this.selectControl.select(feature);
+    }
 });
 
 Ext.preg(gxp.plugins.FeatureEditor.prototype.ptype, gxp.plugins.FeatureEditor);

@@ -6,7 +6,7 @@ GeoExt.Lang.add("en", {
     },
 
     "gxp.plugins.AddLayers.prototype": {
-        addMenuText: "Add layers",
+        addActionMenuText: "Add layers",
         addActionTip: "Add layers",
         addServerText: "Add a New Server",
         addButtonText: "Add layers",
@@ -38,7 +38,8 @@ GeoExt.Lang.add("en", {
         previousPageTip: "Previous page",
         zoomPageExtentTip: "Zoom to page extent",
         nextPageTip: "Next page",
-        nextPageTip: "Last page"
+        nextPageTip: "Last page",
+        totalMsg: "Total: {0} records"
     },
 
     "gxp.plugins.GoogleEarth.prototype": {
@@ -347,6 +348,7 @@ GeoExt.Lang.add("en", {
         title: "Add New Server...",
         cancelText: "Cancel",
         addServerText: "Add Server",
+        invalidURLText: "Enter a valid URL to a WMS endpoint (e.g. http://example.com/geoserver/wms)",
         contactingServerText: "Contacting Server..."
     },
 

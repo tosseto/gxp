@@ -371,6 +371,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             }, mapConfig),
             center: config.center && new OpenLayers.LonLat(config.center[0], config.center[1]),
             resolutions: config.resolutions,
+            forceInitialExtent: true,
             layers: null,
             items: this.mapItems,
             tbar: config.tbar || {hidden: true}
@@ -416,14 +417,13 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
     initPortal: function() {
 
         var config = this.portalConfig || {};
-        var Constructor = config.renderTo ? Ext.Panel : Ext.Viewport;
 
         if (this.portalItems.length === 0) {
             this.mapPanel.region = "center";
             this.portalItems.push(this.mapPanel);
         }
-
-        this.portal = new Constructor(Ext.applyIf(this.portalConfig || {}, {
+        
+        this.portal = Ext.ComponentMgr.create(Ext.applyIf(config, {
             layout: "fit",
             hideBorders: true,
             items: {
@@ -431,7 +431,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
                 deferredRender: false,
                 items: this.portalItems
             }
-        }));
+        }), config.renderTo ? "panel" : "viewport");
 
         this.fireEvent("portalready");
     },
@@ -485,16 +485,6 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             var records = baseRecords.concat(overlayRecords);
             if (records.length) {
                 panel.layers.add(records);
-
-                // set map center
-                if(panel.center) {
-                    // zoom does not have to be defined
-                    map.setCenter(panel.center, panel.zoom);
-                } else if (panel.extent) {
-                    map.zoomToExtent(panel.extent);
-                } else {
-                    map.zoomToMaxExtent();
-                }
             }
 
         }
@@ -617,18 +607,47 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
 
     /** api: method[isAuthorized]
      *  :arg role: ``String`` optional, default is "ROLE_ADMINISTRATOR"
-     *  :returns: ``Boolean`` of ``undefined`` if the ``authorizedRoles``
-     *      property is not set.
+     *  :returns: ``Boolean`` The user is authorized for the given role.
      *
      *  Returns true if the client is authorized with the provided role.
+     *  In cases where the application doesn't explicitly handle authentication,
+     *  the user is assumed to be authorized for all roles.  This results in
+     *  authentication challenges from the browser when an action requires 
+     *  credentials.
      */
     isAuthorized: function(role) {
-        var authorized = undefined;
-        if (this.authorizedRoles) {
-            role = role || "ROLE_ADMINISTRATOR";
-            authorized = this.authorizedRoles.indexOf(role) !== -1;
-        }
-        return authorized;
+        /**
+         * If the application doesn't support authentication, we expect 
+         * authorizedRoles to be undefined.  In this case, from the UI 
+         * perspective, we treat the user as if they are authorized to do
+         * anything.  This will result in just-in-time authentication challenges
+         * from the browser where authentication credentials are needed.
+         * If the application does support authentication, we expect
+         * authorizedRoles to be a list of roles for which the user is 
+         * authorized.
+         */
+        return !this.authorizedRoles || 
+            (this.authorizedRoles.indexOf(role || "ROLE_ADMINISTRATOR") !== -1);
+    },
+    
+    /** api: method[isAuthenticated]
+     *  :returns: ``Boolean`` The user has authenticated.
+     *
+     *  Determines whether a user has logged in.  In cases where the application
+     *  doesn't provide a login dialog, the user will be considered logged in.
+     *  In this same case, where components require authentication, the browser
+     *  will prompt for credentials when needed.
+     */
+    isAuthenticated: function(role) {
+        /**
+         * If the application supports authentication, we expect a list of
+         * authorized roles to be set (length zero if user has not logged in).
+         * If the application does not support authentication, authorizedRoles
+         * should be undefined.  In this case, we return true so that components
+         * that require authentication can still be enabled.  This leaves the
+         * authentication challenge up to the browser.
+         */
+        return !this.authorizedRoles || this.authorizedRoles.length > 0;
     },
 
     /** api: method[destroy]

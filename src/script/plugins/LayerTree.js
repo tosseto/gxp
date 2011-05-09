@@ -49,6 +49,47 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
      */
     baseNodeText: "Base Layers",
     
+    /** api: config[groups]
+     *  ``Object`` The groups to show in the layer tree. Keys are group names,
+     *  and values are either group titles or an object with ``title`` and
+     *  ``exclusive`` properties. ``exclusive`` means that nodes will have
+     *  radio buttons instead of checkboxes, so only one layer of the group can
+     *  be active at a time. Optional, the default is
+     *
+     *  .. code-block:: javascript
+     *
+     *      groups: {
+     *          "default": "Overlays", // title can be overridden with overlayNodeText
+     *          "background": {
+     *              title: "Base Layers", // can be overridden with baseNodeText
+     *              exclusive: true
+     *          }
+     *      }
+     */
+    groups: null,
+    
+    /** api: config[defaultGroup]
+     *  ``String`` The name of the default group, i.e. the group that will be
+     *  used when none is specified. Defaults to ``default``.
+     */
+    defaultGroup: "default",
+    
+    /** private: method[constructor]
+     *  :arg config: ``Object``
+     */
+    constructor: function(config) {
+        gxp.plugins.LayerTree.superclass.constructor.apply(this, arguments);
+        if (!this.groups) {
+            this.groups = {
+                "default": this.overlayNodeText,
+                "background": {
+                    title: this.baseNodeText,
+                    exclusive: true
+                }
+            };
+        }
+    },
+    
     /** private: method[addOutput]
      *  :arg config: ``Object``
      */
@@ -80,84 +121,57 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
             isTarget: false,
             allowDrop: false
         });
-        treeRoot.appendChild(new GeoExt.tree.LayerContainer({
-            text: this.overlayNodeText,
-            iconCls: "gxp-folder",
-            expanded: true,
-            loader: new GeoExt.tree.LayerLoader({
-                store: this.target.mapPanel.layers,
-                filter: function(record) {
-                    return !record.get("group") &&
-                        record.getLayer().displayInLayerSwitcher == true;
-                },
-                createNode: function(attr) {
-                    attr.uiProvider = LayerNodeUI;
-                    var layer = attr.layer;
-                    var store = attr.layerStore;
-                    if (layer && store) {
-                        var record = store.getAt(store.findBy(function(r) {
-                            return r.getLayer() === layer;
-                        }));
-                        if (record && !record.get("queryable")) {
-                            attr.iconCls = "gxp-tree-rasterlayer-icon";
-                        }
-                    }
-                    var node = GeoExt.tree.LayerLoader.prototype.createNode.apply(this, [attr]);
-                    addListeners(node, record);
-                    return node;
-                }
-            }),
-            singleClickExpand: true,
-            allowDrag: false,
-            listeners: {
-                append: function(tree, node) {
-                    node.expand();
-                }
-            }
-        }));
         
-        treeRoot.appendChild(new GeoExt.tree.LayerContainer({
-            text: this.baseNodeText,
-            iconCls: "gxp-folder",
-            expanded: true,
-            group: "background",
-            loader: new GeoExt.tree.LayerLoader({
-                baseAttrs: {checkedGroup: "background"},
-                store: this.target.mapPanel.layers,
-                filter: function(record) {
-                    return record.get("group") === "background" &&
-                        record.getLayer().displayInLayerSwitcher == true;
-                },
-                createNode: function(attr) {
-                    attr.uiProvider = LayerNodeUI;
-                    var layer = attr.layer;
-                    var store = attr.layerStore;
-                    if (layer && store) {
-                        var record = store.getAt(store.findBy(function(r) {
-                            return r.getLayer() === layer;
-                        }));
-                        if (record) {
-                            if (!record.get("queryable")) {
-                                attr.iconCls = "gxp-tree-rasterlayer-icon";
-                            }
-                            if (record.get("fixed")) {
-                                attr.allowDrag = false;
+        var groupConfig, defaultGroup = this.defaultGroup;
+        for (var group in this.groups) {
+            groupConfig = typeof this.groups[group] == "string" ?
+                {title: this.groups[group]} : this.groups[group];
+            treeRoot.appendChild(new GeoExt.tree.LayerContainer({
+                text: groupConfig.title,
+                iconCls: "gxp-folder",
+                expanded: true,
+                group: group == defaultGroup ? undefined : group,
+                loader: new GeoExt.tree.LayerLoader({
+                    baseAttrs: groupConfig.exclusive ?
+                        {checkedGroup: group} : undefined,
+                    store: this.target.mapPanel.layers,
+                    filter: (function(group) {
+                        return function(record) {
+                            return (record.get("group") || defaultGroup) == group &&
+                                record.getLayer().displayInLayerSwitcher == true;
+                        };
+                    })(group),
+                    createNode: function(attr) {
+                        attr.uiProvider = LayerNodeUI;
+                        var layer = attr.layer;
+                        var store = attr.layerStore;
+                        if (layer && store) {
+                            var record = store.getAt(store.findBy(function(r) {
+                                return r.getLayer() === layer;
+                            }));
+                            if (record) {
+                                if (!record.get("queryable")) {
+                                    attr.iconCls = "gxp-tree-rasterlayer-icon";
+                                }
+                                if (record.get("fixed")) {
+                                    attr.allowDrag = false;
+                                }
                             }
                         }
+                        var node = GeoExt.tree.LayerLoader.prototype.createNode.apply(this, arguments);
+                        addListeners(node, record);
+                        return node;
                     }
-                    var node = GeoExt.tree.LayerLoader.prototype.createNode.apply(this, arguments);
-                    addListeners(node, record);
-                    return node;
+                }),
+                singleClickExpand: true,
+                allowDrag: false,
+                listeners: {
+                    append: function(tree, node) {
+                        node.expand();
+                    }
                 }
-            }),
-            singleClickExpand: true,
-            allowDrag: false,
-            listeners: {
-                append: function(tree, node) {
-                    node.expand();
-                }
-            }
-        }));
+            }));
+        }
         
         config = Ext.apply({
             xtype: "treepanel",
