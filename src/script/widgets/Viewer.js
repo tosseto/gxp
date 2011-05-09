@@ -485,6 +485,16 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             var records = baseRecords.concat(overlayRecords);
             if (records.length) {
                 panel.layers.add(records);
+
+                // set map center
+                if(panel.center) {
+                    // zoom does not have to be defined
+                    map.setCenter(panel.center, panel.zoom);
+                } else if (panel.extent) {
+                    map.zoomToExtent(panel.extent);
+                } else {
+                    map.zoomToMaxExtent();
+                }
             }
 
         }
