@@ -66,7 +66,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
                 maxExtent = undefined;
             }
 
-        
+
 
             var params = {
                 STYLES: config.styles,
@@ -107,7 +107,6 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
                   layer.addOptions({resolutions: tileResolutions,
                   tileSize: new OpenLayers.Size(tileWidth, tileHeight),
                   tileOrigin: new OpenLayers.LonLat(originLat, originLon)});
-                  console.log('TileResolutions:' + tileResolutions);
                   layer.params.TILED = true; // set to true when http://projects.opengeo.org/suite/ticket/1286 is closed
             }
             // data for the new record
@@ -164,7 +163,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
             styles: params.STYLES,
             tiled: record.getLayer().params.TILED
         });
-    }    
+    }
 
 });
 
