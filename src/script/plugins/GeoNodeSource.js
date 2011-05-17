@@ -122,7 +122,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
                 queryable: config.queryable,
                 disabled: config.disabled,
                 abstract: config.abstract,
-                styles: config.styles
+                styles: [config.styles]
             };
 
             // add additional fields
