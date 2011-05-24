@@ -140,15 +140,15 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      *  construct layer records, the source can be lazy.
      */
     isLazy: function() {
-        var lazy = true;
+        var lazy = false;
         var mapConfig = this.target.initialConfig.map;
         if (mapConfig && mapConfig.layers) {
             var layerConfig;
             for (var i=0, ii=mapConfig.layers.length; i<ii; ++i) {
                 layerConfig = mapConfig.layers[i];
                 if (layerConfig.source === this.id) {
-                    if (!this.layerConfigComplete(layerConfig)) {
-                        lazy = false;
+                    if (this.layerConfigComplete(layerConfig)) {
+                        lazy = true;
                         break;
                     }
                 }
