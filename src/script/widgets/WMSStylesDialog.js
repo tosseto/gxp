@@ -1051,6 +1051,9 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
                     tbItems.get(2).disable();
                     tbItems.get(3).disable();
                 },
+                "rulemoved": function() {
+                    this.markModified();
+                },
                 "afterlayout": function() {
                     // restore selection
                     //TODO QA: avoid accessing private properties/methods
@@ -1100,7 +1103,7 @@ gxp.WMSStylesDialog.createGeoServerStylerConfig = function(layerRecord, url) {
         }],
         listeners: {
             "styleselected": function(cmp, style) {
-                cmp.modified && layer.mergeNewParams({
+                layer.mergeNewParams({
                     styles: style
                 });
             },
@@ -1145,36 +1148,35 @@ Ext.reg('gxp_wmsstylesdialog', gxp.WMSStylesDialog);
  * vendor specific extensions introduced by GeoTools.
  */
 
-
-// read/write GeoTools custom VendorOption elements
-OpenLayers.Format.SLD.v1.prototype.readers.sld["VendorOption"] = function(node, obj) {
-    if (!obj.vendorOptions) {
-        obj.vendorOptions = [];
-    }
-    obj.vendorOptions.push({
-        name: node.getAttribute("name"),
-        value: this.getChildValue(node)
-    });    
-};
-OpenLayers.Format.SLD.v1.prototype.writers.sld["VendorOption"] = function(option) {
-    return this.createElementNSPlus("sld:VendorOption", {
-        attributes: {name: option.name},
-        value: option.value
-    });
-};
-
-// read GeoTools custom Priority element in TextSymbolizer
-OpenLayers.Format.SLD.v1.prototype.readers.sld["Priority"] = function(node, obj) {
-    obj.priority = this.readOgcExpression(node);
-};
-OpenLayers.Format.SLD.v1.prototype.writers.sld["Priority"] = function(priority) {
-    var node = this.createElementNSPlus("sld:Priority");
-    this.writeNode("ogc:Literal", priority, node);
-    return node;
-};
-
-(function() {
+OpenLayers.Format && OpenLayers.Format.SLD && OpenLayers.Format.SLD.v1 && (function() {
     
+    // read/write GeoTools custom VendorOption elements
+    OpenLayers.Format.SLD.v1.prototype.readers.sld["VendorOption"] = function(node, obj) {
+        if (!obj.vendorOptions) {
+            obj.vendorOptions = [];
+        }
+        obj.vendorOptions.push({
+            name: node.getAttribute("name"),
+            value: this.getChildValue(node)
+        });    
+    };
+    OpenLayers.Format.SLD.v1.prototype.writers.sld["VendorOption"] = function(option) {
+        return this.createElementNSPlus("sld:VendorOption", {
+            attributes: {name: option.name},
+            value: option.value
+        });
+    };
+
+    // read GeoTools custom Priority element in TextSymbolizer
+    OpenLayers.Format.SLD.v1.prototype.readers.sld["Priority"] = function(node, obj) {
+        obj.priority = this.readOgcExpression(node);
+    };
+    OpenLayers.Format.SLD.v1.prototype.writers.sld["Priority"] = function(priority) {
+        var node = this.createElementNSPlus("sld:Priority");
+        this.writeNode("ogc:Literal", priority, node);
+        return node;
+    };
+
     // extend OL SLD parser to accommodate GeoTools extensions to SLD
     // http://svn.osgeo.org/geotools/branches/2.6.x/modules/extension/xsd/xsd-sld/src/main/resources/org/geotools/sld/bindings/StyledLayerDescriptor.xsd
 
@@ -1213,7 +1215,7 @@ OpenLayers.Format.SLD.v1.prototype.writers.sld["Priority"] = function(priority) 
                     }
                 }
                 return node;
-            }
+            };
         })(original);
     }
 
