@@ -432,7 +432,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             this.mapPanel.region = "center";
             this.portalItems.push(this.mapPanel);
         }
-        
+
         this.portal = Ext.ComponentMgr.create(Ext.applyIf(config, {
             layout: "fit",
             hideBorders: true,
@@ -483,11 +483,9 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             // sort background records so visible layers are first
             // this is largely a workaround for an OpenLayers Google Layer issue
             // http://trac.openlayers.org/ticket/2661
-            //Causes max zoom issues, comment out
-//            baseRecords.sort(function(a, b) {
-//                return a.get("layer").visibility < b.get("layer").visibility;
-//            });
-
+            baseRecords.sort(function(a, b) {
+                return a.get("layer").visibility < b.get("layer").visibility;
+            });
 
             var panel = this.mapPanel;
             var map = panel.map;
@@ -495,17 +493,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             var records = baseRecords.concat(overlayRecords);
             if (records.length) {
                 panel.layers.add(records);
-
-                // set map center
-                if(panel.center) {
-                    // zoom does not have to be defined
-                    map.setCenter(panel.center, panel.zoom);
-                } else if (panel.extent) {
-                    map.zoomToExtent(panel.extent);
-                } else {
-                    map.zoomToMaxExtent();
                 }
-            }
 
         }
     },
@@ -632,24 +620,24 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
      *  Returns true if the client is authorized with the provided role.
      *  In cases where the application doesn't explicitly handle authentication,
      *  the user is assumed to be authorized for all roles.  This results in
-     *  authentication challenges from the browser when an action requires 
+     *  authentication challenges from the browser when an action requires
      *  credentials.
      */
     isAuthorized: function(role) {
         /**
-         * If the application doesn't support authentication, we expect 
-         * authorizedRoles to be undefined.  In this case, from the UI 
+         * If the application doesn't support authentication, we expect
+         * authorizedRoles to be undefined.  In this case, from the UI
          * perspective, we treat the user as if they are authorized to do
          * anything.  This will result in just-in-time authentication challenges
          * from the browser where authentication credentials are needed.
          * If the application does support authentication, we expect
-         * authorizedRoles to be a list of roles for which the user is 
+         * authorizedRoles to be a list of roles for which the user is
          * authorized.
          */
-        return !this.authorizedRoles || 
+        return !this.authorizedRoles ||
             (this.authorizedRoles.indexOf(role || "ROLE_ADMINISTRATOR") !== -1);
     },
-    
+
     /** api: method[isAuthenticated]
      *  :returns: ``Boolean`` The user has authenticated.
      *
