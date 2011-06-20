@@ -6,7 +6,6 @@
  * of the license.
  */
 
-//TODO remove the WMSStylesDialog and GeoServerStyleWriter includes
 /**
  * @include widgets/WMSStylesDialog.js
  * @include plugins/GeoServerStyleWriter.js
@@ -39,12 +38,6 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
      *  will be ignored.
      */
     source: null,
-
-    /** api: config[styling]
-     *  ``Boolean``
-     *  Show a "Styles" tab. Default is true.
-     */
-    styling: true,
 
     /** api: config[sameOriginStyling]
      *  ``Boolean``
@@ -119,7 +112,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         }
 
         // only add the Styles panel if we know for sure that we have styles
-        if (this.styling && gxp.WMSStylesDialog && this.layerRecord.get("styles")) {
+        if (this.layerRecord.get("styles")) {
             var url = (this.source || this.layerRecord.get("layer")).url.split(
                 "?").shift().replace(/\/(wms|ows)\/?$/, "/rest");
             if (this.sameOriginStyling) {
@@ -284,21 +277,6 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         var transparent = layer.params["TRANSPARENT"];
         transparent = (transparent === "true" || transparent === true);
 
-        var transCheck = {
-                xtype: "checkbox",
-                fieldLabel: this.transparentText,
-                checked: transparent,
-                listeners: {
-                    check: function(checkbox, checked) {
-                        layer.mergeNewParams({
-                            transparent: checked ? "true" : "false"
-                        });
-                        this.fireEvent("change");
-                    },
-                    scope: this
-                }
-        };
-
         return {
             title: this.displayText,
             style: {"padding": "10px"},
@@ -335,14 +313,26 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                         layer.mergeNewParams({
                             format: format
                         });
-                        transCheck.setDisabled(format == "image/jpeg");
+                        Ext.getCmp('transparent').setDisabled(format == "image/jpeg");
                         this.fireEvent("change");
                     },
                     scope: this
                 }
+            }, {
+                xtype: "checkbox",
+                id: 'transparent',
+                fieldLabel: this.transparentText,
+                checked: transparent,
+                listeners: {
+                    check: function(checkbox, checked) {
+                        layer.mergeNewParams({
+                            transparent: checked ? "true" : "false"
+                        });
+                        this.fireEvent("change");
             },
-            transCheck
-            ]
+                    scope: this
+                }
+            }]
         };
     }
 

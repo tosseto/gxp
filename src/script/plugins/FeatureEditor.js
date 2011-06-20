@@ -44,6 +44,10 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      */
     iconClsEdit: "gxp-icon-editfeature",
 
+    /** i18n **/
+    exceptionTitle: "Save Failed",
+    exceptionText: "Trouble saving features",
+
     /** api: config[createFeatureActionTip]
      *  ``String``
      *  Tooltip string for create new feature action (i18n).
@@ -146,7 +150,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
         var popup;
         var featureManager = this.target.tools[this.featureManager];
         var featureLayer = featureManager.featureLayer;
-
+        
         // optionally set up snapping
         var snapId = this.snappingAgent;
         if (snapId) {
@@ -336,6 +340,31 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
                                         fn: function() {
                                             if (popup && popup.isVisible()) {
                                                 popup.enable();
+                                            }
+                                        },
+                                        single: true
+                                    },
+                                    exception: {
+                                        fn: function(proxy, type, action, options, response, records) {
+                                            var msg = this.exceptionText;
+                                            if (type === "remote") {
+                                                // response is service exception
+                                                if (response.exceptionReport) {
+                                                    msg = gxp.util.getOGCExceptionText(response.exceptionReport);
+                                                }
+                                            } else {
+                                                // non-200 response from server
+                                                msg = "Status: " + response.status;
+                                            }
+                                            Ext.Msg.show({
+                                                title: this.exceptionTitle,
+                                                msg: msg,
+                                                icon: Ext.MessageBox.ERROR,
+                                                buttons: {ok: true}
+                                            });
+                                            if (popup && popup.isVisible()) {
+                                                popup.enable();
+                                                popup.startEditing();
                                             }
                                         },
                                         single: true

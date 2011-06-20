@@ -45,6 +45,7 @@
         "plugins/OSMSource.js",
         "plugins/GoogleSource.js",
         "plugins/OLSource.js",
+        "plugins/MapBoxSource.js",
         "plugins/MapQuestSource.js",
         "plugins/StyleWriter.js",
         "plugins/GeoServerStyleWriter.js",
@@ -78,6 +79,7 @@
         "plugins/LayerProperties.js",
         "plugins/Legend.js",
         "plugins/Print.js",
+        "plugins/LoadingIndicator.js",
         "locale/es.js",
         "locale/ca.js"
     );
