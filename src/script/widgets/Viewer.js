@@ -462,6 +462,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
 
     addLayers: function() {
         var mapConfig = this.initialConfig.map;
+        var selectedBackground = 0;
         if(mapConfig && mapConfig.layers) {
             var conf, source, record, baseRecords = [], overlayRecords = [];
             for (var i=0; i<mapConfig.layers.length; ++i) {
@@ -472,6 +473,15 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
                     record = source.createLayerRecord(conf);
                     if (record) {
                         if (record.get("group") === "background") {
+                            //Workaround to make sure map always has 20 zoom levels
+                            if ( i > 0 && record.get("layer").visibility === true)
+                            {
+                                selectedBackground = i;
+                            }
+                            if (i==0){
+                                record.get("layer").visibility = true;
+                            } else
+                               record.get("layer").visibility = false;
                             baseRecords.push(record);
                         } else {
                             overlayRecords.push(record);
@@ -483,9 +493,9 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             // sort background records so visible layers are first
             // this is largely a workaround for an OpenLayers Google Layer issue
             // http://trac.openlayers.org/ticket/2661
-            baseRecords.sort(function(a, b) {
-                return a.get("layer").visibility < b.get("layer").visibility;
-            });
+//            baseRecords.sort(function(a, b) {
+//                return a.get("layer").visibility < b.get("layer").visibility;
+//            });
 
             var panel = this.mapPanel;
             var map = panel.map;
@@ -494,7 +504,10 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             if (records.length) {
                 panel.layers.add(records);
                 }
-
+            if (selectedBackground > 0)
+            {
+                map.layers[selectedBackground].setVisibility(true);
+            }
         }
     },
 
