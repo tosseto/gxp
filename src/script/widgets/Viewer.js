@@ -377,7 +377,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
                 ],
                 maxExtent: mapConfig.maxExtent && OpenLayers.Bounds.fromArray(mapConfig.maxExtent),
                 restrictedExtent: mapConfig.restrictedExtent && OpenLayers.Bounds.fromArray(mapConfig.restrictedExtent),
-                numZoomLevels: 20
+                numZoomLevels: 21
             }, mapConfig),
             center: config.center && new OpenLayers.LonLat(config.center[0], config.center[1]),
             resolutions: config.resolutions,
