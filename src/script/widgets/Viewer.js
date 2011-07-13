@@ -507,6 +507,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             if (selectedBackground > 0)
             {
                 map.layers[selectedBackground].setVisibility(true);
+                map.layers[0].setVisibility(false);
             }
         }
     },
