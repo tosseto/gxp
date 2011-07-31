@@ -48,6 +48,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
     createLayerRecord: function(config) {
         var record;
 
+        if (config['llbbox']) {
 
             /**
              * TODO: The WMSCapabilitiesReader should allow for creation
@@ -115,6 +116,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
                 name: config.name,
                 source: config.source,
                 group: config.group,
+                searchfields: config.searchfields,
                 properties: "gxp_wmslayerpanel",
                 fixed: config.fixed,
                 selected: "selected" in config ? config.selected : false,
@@ -131,6 +133,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
                 {name: "name", type: "string"},
                 {name: "source", type: "string"},
                 {name: "group", type: "string"},
+                {name: "searchfields"}, //array
                 {name: "properties", type: "string"},
                 {name: "fixed", type: "boolean"},
                 {name: "selected", type: "boolean"},
@@ -144,6 +147,7 @@ gxp.plugins.GeoNodeSource = Ext.extend(gxp.plugins.LayerSource, {
             record = new Record(data, layer.id);
 
             return record;
+        }
     },
 
 
