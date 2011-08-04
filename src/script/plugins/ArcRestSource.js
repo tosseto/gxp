@@ -91,8 +91,8 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
 
 
         Ext.Ajax.request({
-            url: baseUrl + "?f=json&pretty=true",
-            //defaultHeaders: {'Accept': 'application/json'},
+            url: baseUrl,
+            params: {'f' : 'json', 'pretty' : 'false', 'keepPostParams' : 'true'},
             method: 'POST',
             success: processResult,
             failure: processFailure
