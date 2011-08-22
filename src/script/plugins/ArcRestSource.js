@@ -7,22 +7,18 @@
  */
 
 
-/** api: (define)
- *  module = gxp.plugins
- *  class = LayerSource
- *  base_link = `Ext.util.Observable <http://extjs.com/deploy/dev/docs/?class=Ext.util.Observable>`_
+/** api: (extends)
+ *  plugins/LayerSource.js
  */
 Ext.namespace("gxp.plugins");
 
 /** api: constructor
- *  .. class:: LayerSource(config)
+ *  .. class:: ArcRestSource(config)
  *
- *    Base class for layer sources to plug into a :class:`gxp.Viewer`. A source
- *    is created by adding it to the ``sources`` object of the viewer. Once
- *    there, the viewer will create layers from it by looking at objects in
- *    the ``layers`` array of its ``map`` config option, calling the source's
- *    ``createLayerRecord`` method.
+ *    Plugin for using ArcGIS REST layers with :class:`gxp.Viewer` instances.
+ *
  */
+
 gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
 
     /** api: ptype = gxp_arcrestsource */
@@ -43,12 +39,9 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
     createStore: function()
     {
         var baseUrl =    this.url.split("?")[0];
-        //console.log('baseURL:' + baseUrl);
-        //console.log('Proxy URL:' + baseUrl + "?f=json&pretty=true");
         var source = this;
 
         var processResult = function(response) {
-               //console.log('RESPONSE:' + response);
                 var json = Ext.decode(response.responseText);
 
                 if (json.capabilities.contains('Map'))
@@ -57,14 +50,12 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
                 for (var l=0; l < json.layers.length; l++) {
                     var layer = json.layers[l];
                     var layerShow = "show:" + layer.id;
-                    //console.log('layer ' + layer.id + ':' + layer.name);
                     layers.push(new OpenLayers.Layer.ArcGIS93Rest(layer.name, baseUrl + "/export",
                             {layers: layerShow, TRANSPARENT: true}, {isBaseLayer: false, displayInLayerSwitcher: true, visibility: true, projection: "EPSG:102113", queryable: json.capabilities.contains("Identify")}
                     ));
                 }
 
                 this.title = json['documentInfo']['Title'];
-                //console.log('TITLE:' + this.title);
 
                 source.store = new GeoExt.data.LayerStore({
                     layers: layers,
@@ -90,6 +81,11 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
         };
 
 
+        /**
+         *  Send a 'keepPostParams' parameter notifying GeoExplorer to not delete
+         *  post body contents from request (it's normal behavior), because many
+         *  ArcGIS REST servers won't accept empty POST body contents.
+         */
         Ext.Ajax.request({
             url: baseUrl,
             params: {'f' : 'json', 'pretty' : 'false', 'keepPostParams' : 'true'},
@@ -99,6 +95,14 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
         });
     },
 
+
+
+      /** api: method[getConfigForRecord]
+     *  :arg record: :class:`GeoExt.data.LayerRecord`
+     *  :returns: ``Object``
+     *
+     *  Create a config object that can be used to recreate the given record.
+     */
     createLayerRecord: function(config) {
         var record;
         var cmp = function(l) {
@@ -111,12 +115,6 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
             var layer = record.getLayer();
             // set layer title from config
             if (config.title) {
-                /**
-                 * Because the layer title data is duplicated, we have
-                 * to set it in both places.  After records have been
-                 * added to the store, the store handles this
-                 * synchronization.
-                 */
                 layer.setName(config.title);
                 record.set("title", config.title);
             }
@@ -144,8 +142,5 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
 
 
 });
-
-
-
 
 Ext.preg(gxp.plugins.ArcRestSource.prototype.ptype, gxp.plugins.ArcRestSource);
