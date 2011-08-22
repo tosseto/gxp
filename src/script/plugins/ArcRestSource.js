@@ -46,12 +46,24 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
 
                 if (json.capabilities.contains('Map'))
                 {
+
+                var layerProjection = source.getArcProjection(json.spatialReference.wkid);
+
                 var layers = [];
                 for (var l=0; l < json.layers.length; l++) {
                     var layer = json.layers[l];
                     var layerShow = "show:" + layer.id;
                     layers.push(new OpenLayers.Layer.ArcGIS93Rest(layer.name, baseUrl + "/export",
-                            {layers: layerShow, TRANSPARENT: true}, {isBaseLayer: false, displayInLayerSwitcher: true, visibility: true, projection: "EPSG:102113", queryable: json.capabilities.contains("Identify")}
+                            {
+                                layers: layerShow,
+                                TRANSPARENT: true
+                            },
+                            {
+                                isBaseLayer: false,
+                                displayInLayerSwitcher: true,
+                                visibility: true,
+                                projection: layerProjection,
+                                queryable: json.capabilities.contains("Identify")}
                     ));
                 }
 
@@ -138,6 +150,33 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
             record.commit();
         }
         return record;
+    },
+
+
+
+    /** api: method[getProjection]
+     *  :arg layerRecord: ``GeoExt.data.LayerRecord`` a record from this
+     *      source's store
+     *  :returns: ``OpenLayers.Projection`` A suitable projection for the
+     *      ``layerRecord``. If the layer is available in the map projection,
+     *      the map projection will be returned. Otherwise an equal projection,
+     *      or null if none is available.
+     *
+     *  Get the projection that the source will use for the layer created in
+     *  ``createLayerRecord``. If the layer is not available in a projection
+     *  that fits the map projection, null will be returned.
+     */
+    getArcProjection: function(srs) {
+        var projection = this.getMapProjection();
+        var compatibleProjection = projection;
+        var layerSRS = "EPSG:" + srs + '';
+        if (layerSRS !== projection.getCode()) {
+            compatibleProjection = null;
+            if ((p=new OpenLayers.Projection(layerSRS)).equals(projection)) {
+                    compatibleProjection = p;
+            }
+        }
+        return compatibleProjection;
     }
 
 
