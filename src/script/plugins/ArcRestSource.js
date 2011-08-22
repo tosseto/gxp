@@ -67,7 +67,7 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
                     ));
                 }
 
-                this.title = json['documentInfo']['Title'];
+                source.title =  json.documentInfo.Title;
 
                 source.store = new GeoExt.data.LayerStore({
                     layers: layers,
