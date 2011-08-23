@@ -37,8 +37,19 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
      *  ``String``
      *  Text for add server button (i18n).
      */
-    addServerText: "Add A Friggin Server",
+    addServerText: "Add Server",
+     /** api: config[wmsText]
+     *  ``String``
+     *  Text for WMS radio-button(i18n).
+     */
+    addWMSText: "WMS",
 
+     /** api: config[arcText]
+     *  ``String``
+     *  Text for ArcGIS REST radio-button(i18n).
+     */
+    addArcText: "ArcGIS REST",
+    
     /** api: config[invalidURLText]
      *  ``String``
      *  Message to display when an invalid URL is entered (i18n).
@@ -90,10 +101,10 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
 
         this.sourceTypeRadioList = new Ext.form.RadioGroup({
                 fieldLabel: 'Type',
-                columns: 2,
+                columns: [50, 190],
                 items: [
-                    {name: 'source_type', inputValue: 'gxp_wmscsource', boxLabel: 'WMS', checked: true},
-                    {name: 'source_type', inputValue: 'gxp_arcrestsource', boxLabel: 'ArcGIS REST'}
+                    {name: 'source_type', inputValue: 'gxp_wmscsource', boxLabel: this.addWMSText, checked: true},
+                    {name: 'source_type', inputValue: 'gxp_arcrestsource', boxLabel: this.addArcText}
                 ]
         });
 
