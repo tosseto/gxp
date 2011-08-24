@@ -44,9 +44,6 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
         var processResult = function(response) {
                 var json = Ext.decode(response.responseText);
 
-                if (json.capabilities.contains('Map'))
-                {
-
                 var layerProjection = source.getArcProjection(json.spatialReference.wkid);
 
                 var layers = [];
@@ -63,7 +60,7 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
                                 displayInLayerSwitcher: true,
                                 visibility: true,
                                 projection: layerProjection,
-                                queryable: json.capabilities.contains("Identify")}
+                                queryable: json.capabilities && json.capabilities.contains("Identify")}
                     ));
                 }
 
@@ -80,8 +77,7 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
                         {name: "selected", type: "boolean"}
                     ]
                 });
-                } else
-                    processFailure();
+
 
                 source.fireEvent("ready", source);
         };
