@@ -45,6 +45,11 @@ gxp.plugins.ArcRestSource = Ext.extend(gxp.plugins.LayerSource, {
                 var json = Ext.decode(response.responseText);
 
                 var layerProjection = source.getArcProjection(json.spatialReference.wkid);
+                if (layerProjection == null) {
+                    processFailure(response);
+                    return;
+                }
+
 
                 var layers = [];
                 for (var l=0; l < json.layers.length; l++) {
