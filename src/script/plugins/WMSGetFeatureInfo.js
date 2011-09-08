@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -26,12 +26,12 @@ Ext.namespace("gxp.plugins");
  *    This plugins provides an action which, when active, will issue a
  *    GetFeatureInfo request to the WMS of all layers on the map. The output
  *    will be displayed in a popup.
- */   
+ */
 gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
-    
+
     /** api: ptype = gxp_wmsgetfeatureinfo */
     ptype: "gxp_wmsgetfeatureinfo",
-    
+
     /** api: config[outputTarget]
      *  ``String`` Popups created by this tool are added to the map by default.
      */
@@ -53,7 +53,7 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
      *  Title for info popup (i18n).
      */
     popupTitle: "Feature Info",
-    
+
     /** api: config[format]
      *  ``String`` Either "html" or "grid". If set to "grid", GML will be
      *  requested from the server and displayed in an Ext.PropertyGrid.
@@ -61,23 +61,23 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
      *  Default is "html".
      */
     format: "html",
-    
+
     /** api: config[vendorParams]
      *  ``Object``
      *  Optional object with properties to be serialized as vendor specific
      *  parameters in the requests (e.g. {buffer: 10}).
      */
-    
+
     /** api: config[paramsFromLayer]
      *  ``Array`` List of param names that should be taken from the layer and
      *  added to the GetFeatureInfo request (e.g. ["CQL_FILTER"]).
      */
-     
+
     /** api: method[addActions]
      */
     addActions: function() {
         this.popupCache = {};
-        
+
         var actions = gxp.plugins.WMSGetFeatureInfo.superclass.addActions.call(this, [{
             tooltip: this.infoActionTip,
             iconCls: "gxp-icon-getfeatureinfo",
@@ -135,7 +135,7 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
                                     this.displayPopup(evt, title, match[1]);
                                 }
                             } else {
-                                this.displayPopup(evt, title);
+                                this.displayPopup(evt, title, null, layer.attributes);
                             }
                         },
                         scope: this
@@ -149,22 +149,22 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
             }, this);
 
         };
-        
+
         this.target.mapPanel.layers.on("update", updateInfo, this);
         this.target.mapPanel.layers.on("add", updateInfo, this);
         this.target.mapPanel.layers.on("remove", updateInfo, this);
-        
+
         return actions;
     },
 
     /** private: method[displayPopup]
-     * :arg evt: the event object from a 
+     * :arg evt: the event object from a
      *     :class:`OpenLayers.Control.GetFeatureInfo` control
-     * :arg title: a String to use for the title of the results section 
+     * :arg title: a String to use for the title of the results section
      *     reporting the info to the user
      * :arg text: ``String`` Body text.
      */
-    displayPopup: function(evt, title, text) {
+    displayPopup: function(evt, title, text, attributeProperties) {
         var popup;
         var popupKey = evt.xy.x + "." + evt.xy.y;
 
@@ -203,10 +203,21 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
             var feature;
             for (var i=0,ii=features.length; i<ii; ++i) {
                 feature = features[i];
+                var attributes = feature.attributes;
+                if (attributeProperties && attributeProperties.length > 0) {
+                    attributes = new Object;
+                    for (var field = 0; field < attributeProperties.length; field++){
+                        var columnId = attributeProperties[field].id;
+                        var columnValue = feature.attributes[columnId];
+                        if (feature.attributes[columnId]){
+                            attributes[attributeProperties[field].header] = columnValue;
+                        }
+                    }
+                }
                 config.push(Ext.applyIf({
-                    xtype: "propertygrid",
+                    xtype: "gxp_featurepropertygrid",
                     title: feature.fid ? feature.fid : title,
-                    source: feature.attributes
+                    source: attributes
                 }, baseConfig));
             }
         } else if (text) {
@@ -217,7 +228,7 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
         popup.add(config);
         popup.doLayout();
     }
-    
+
 });
 
 Ext.preg(gxp.plugins.WMSGetFeatureInfo.prototype.ptype, gxp.plugins.WMSGetFeatureInfo);
