@@ -49,7 +49,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
     /** api: config[sameOriginStyling]
      *  ``Boolean``
      *  Only allow editing of styles for layers whose sources have a URL that
-     *  matches the origin of this application.  It is strongly discouraged to 
+     *  matches the origin of this application.  It is strongly discouraged to
      *  do styling through the proxy as all authorization headers and cookies
      *  are shared with all remotesources.  Default is ``true``.
      */
@@ -60,7 +60,15 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
      *  supported.  Default is ``false``.
      */
     rasterStyling: false,
-    
+
+    /** private: property[transparent]
+     *  ``Boolean``
+     *  Used to store the previous state of the transparent checkbox before
+     *  changing the image format to jpeg (and automagically changing
+     *  the checkbox to disabled and unchecked).
+     */
+    transparent: null,
+
     /** private: property[editableStyles]
      *  ``Boolean``
      */
@@ -284,6 +292,22 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         var transparent = layer.params["TRANSPARENT"];
         transparent = (transparent === "true" || transparent === true);
 
+        var transCheck = {
+                xtype: "checkbox",
+                fieldLabel: this.transparentText,
+                checked: transparent,
+                listeners: {
+                    check: function(checkbox, checked) {
+                        layer.mergeNewParams({
+                            transparent: checked ? "true" : "false"
+                        });
+                        this.fireEvent("change");
+                    },
+                    scope: this
+                }
+        };
+
+
         return {
             title: this.displayText,
             style: {"padding": "10px"},
@@ -320,26 +344,20 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                         layer.mergeNewParams({
                             format: format
                         });
-                        Ext.getCmp('transparent').setDisabled(format == "image/jpeg");
+                        if (format == "image/jpeg") {
+                            this.transparent = Ext.getCmp('transparent').getValue();
+                            transCheck.setValue(false);
+                        } else if (this.transparent !== null) {
+                            transCheck.setValue(this.transparent);
+                            this.transparent = null;
+                        }
+                        transCheck.setDisabled(format == "image/jpeg");
                         this.fireEvent("change");
                     },
                     scope: this
                 }
-            }, {
-                xtype: "checkbox",
-                id: 'transparent',
-                fieldLabel: this.transparentText,
-                checked: transparent,
-                listeners: {
-                    check: function(checkbox, checked) {
-                        layer.mergeNewParams({
-                            transparent: checked ? "true" : "false"
-                        });
-                        this.fireEvent("change");
             },
-                    scope: this
-                }
-            }]
+            transCheck]
         };
     }
 
