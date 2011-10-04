@@ -124,6 +124,12 @@
     margin: 0.5em 10px;
 }
 
+
+/* gxp_geolocate */
+.x-btn .gxp-icon-geolocate, .x-menu-item .gxp-icon-geolocate, .x-tree-node .gxp-icon-geolocate {
+    background-image: url(img/geolocate.png);
+}
+
 /* gxp_print */
 .x-btn .gxp-icon-print, .x-menu-item .gxp-icon-print, .x-tree-node .gxp-icon-print {
     background-image: url(img/silk/printer.png);
