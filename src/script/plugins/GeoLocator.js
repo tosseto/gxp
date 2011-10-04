@@ -24,6 +24,19 @@ gxp.plugins.GeoLocator = Ext.extend(gxp.plugins.Tool, {
     /** api: ptype = gxp_geolocator */
     ptype: "gxp_geolocator",
 
+    /** api: config[maxZoom]
+     *  ``Integer``
+     *  Maximum zoom when centering map on location
+     */
+    maxZoom: 21,
+
+    /** api: config[infoActionTip]
+     *  ``String``
+     *  Text for feature info action tooltip (i18n).
+     */
+    infoActionTip: "Get My Location",
+
+
     /** api: method[addActions]
      */
     addActions: function() {
@@ -44,6 +57,7 @@ gxp.plugins.GeoLocator = Ext.extend(gxp.plugins.Tool, {
                 timeout: 7000
             }
         });
+        var maxZoom = this.maxZoom;
 
 
         /*
@@ -113,6 +127,9 @@ gxp.plugins.GeoLocator = Ext.extend(gxp.plugins.Tool, {
             if (firstGeolocation) {
                 map.zoomToExtent(vector.getDataExtent());
                 pulsate(circle);
+                if (map.getZoom() > maxZoom) {
+                    map.zoomTo(maxZoom);
+                }
                 firstGeolocation = false;
                 this.bind = true;
             }
