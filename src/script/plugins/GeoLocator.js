@@ -128,7 +128,7 @@ gxp.plugins.GeoLocator = Ext.extend(gxp.plugins.Tool, {
         var actions = gxp.plugins.GeoLocator.superclass.addActions.call(this, [
             {
                 tooltip: this.infoActionTip,
-                iconCls: "gxp-icon-crosshairs",
+                iconCls: "gxp-icon-geolocate",
                 toggleGroup: this.toggleGroup,
                 enableToggle: true,
                 allowDepress: true,
