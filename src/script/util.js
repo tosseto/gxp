@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
  * 
- * Published under the BSD license.
+ * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
  */
@@ -110,7 +110,7 @@ gxp.util = {
      */
     getAbsoluteUrl: function(url) {
         var a;
-        if(Ext.isIE) {
+        if(Ext.isIE6 || Ext.isIE7 || Ext.isIE8) {
             a = document.createElement("<a href='" + url + "'/>");
             a.style.display = "none";
             document.body.appendChild(a);
@@ -126,6 +126,8 @@ gxp.util = {
     /** api: function[md5]
      *  :arg data: ``String``
      *  :returns: ``String`` md5 hash
+     *
+     *  Encrypts the specified string using MD5.
      */
     md5: (function() {
 

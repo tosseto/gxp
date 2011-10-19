@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
  * 
- * Published under the BSD license.
+ * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
  */
@@ -90,8 +90,8 @@ gxp.plugins.ClickableFeatures = Ext.extend(gxp.plugins.Tool, {
             BBOX: map.getExtent().toBBOX(),
             WIDTH: size.w,
             HEIGHT: size.h,
-            X: evt.xy.x,
-            Y: evt.xy.y,
+            X: parseInt(evt.xy.x),
+            Y: parseInt(evt.xy.y),
             QUERY_LAYERS: layer.params.LAYERS,
             INFO_FORMAT: "application/vnd.ogc.gml",
             EXCEPTIONS: "application/vnd.ogc.se_xml",
@@ -135,8 +135,10 @@ gxp.plugins.ClickableFeatures = Ext.extend(gxp.plugins.Tool, {
                         var autoLoad = function() {
                             featureManager.loadFeatures(
                                 filter, function(features) {
-                                    this.autoLoadedFeature = features[0];
-                                    this.select(features[0]);
+                                    if (features.length) {
+                                        this.autoLoadedFeature = features[0];
+                                        this.select(features[0]);
+                                    }
                                 }, this
                             );
                         }.createDelegate(this);

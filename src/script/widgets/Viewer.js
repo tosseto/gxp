@@ -1,7 +1,8 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- *
- * Published under the BSD license.
+ * 
+ * Published under the GPL license.
+>>>>>>> gxpcore/master
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
  */
@@ -49,12 +50,24 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
      *  ``GeoExt.MapPanel``
      */
 
+
+    /** api: config[proxy]
+     * ``String`` An optional proxy url which can be used to bypass the same
+     * origin policy. This will be set as ``OpenLayers.ProxyHost``.
+     */
+    
+
     /** api: config[mapItems]
      *  ``Array(Ext.Component)``
      *  Any items to be added to the map panel. A typical item to put on a map
      *  would be a ``GeoExt.ZoomSlider``.
      */
 
+    /** api: config[mapPlugins]
+     *  ``Array(Ext.util.Observable)``
+     *  Any plugins to be added to the map panel, e.g. ``gxp.plugins.LoadingIndicator``.
+     */
+     
     /** api: config[portalConfig]
      *  ``Object`` Configuration object for the wrapping container of the
      *  viewer. This will be an ``Ext.Panel`` if it has a ``renderTo``
@@ -210,7 +223,18 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
              *  * layerRecord - ``GeoExt.data.LayerRecord`` the record of the
              *    selected layer, or null if no layer is selected.
              */
-            "layerselectionchange"
+            "layerselectionchange",
+            
+            /** api: event[featureedit]
+             *  Fired when features were edited.
+             *
+             *  Listener arguments:
+             *  * featureManager - ``gxp.plugins.FeatureManager`` the
+             *    the feature manager that was used for editing
+             *  * layer - ``Object`` object with name and source of the layer
+             *    that was edited
+             */
+            "featureedit"
         );
 
         Ext.apply(this, {
@@ -221,7 +245,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
         // private array of pending getLayerRecord requests
         this.createLayerRecordQueue = [];
 
-        this.loadConfig(config, this.applyConfig);
+        (config.loadConfig || this.loadConfig).call(this, config, this.applyConfig);
         gxp.Viewer.superclass.constructor.apply(this, arguments);
 
     },
@@ -239,7 +263,13 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
         var allow = this.fireEvent("beforelayerselectionchange", record);
         if (allow !== false) {
             changed = true;
+            if (this.selectedLayer) {
+                this.selectedLayer.set("selected", false);
+            }
             this.selectedLayer = record;
+            if (this.selectedLayer) {
+                this.selectedLayer.set("selected", true);
+            }
             this.fireEvent("layerselectionchange", record);
         }
         return changed;
@@ -361,7 +391,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
                 if (prop in config) {
                     mapConfig[prop] = config[prop];
                     delete config[prop];
-                };
+                }
             }
         }
 
@@ -384,6 +414,7 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             forceInitialExtent: true,
             layers: null,
             items: this.mapItems,
+            plugins: this.mapPlugins,
             tbar: config.tbar || {hidden: true}
         }, config));
 

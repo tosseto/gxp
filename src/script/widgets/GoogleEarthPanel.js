@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
  * 
- * Published under the BSD license.
+ * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
  */
@@ -116,11 +116,11 @@ gxp.GoogleEarthPanel = Ext.extend(Ext.Panel, {
         this.on("show", render, this);
         
         this.on("hide", function() {
-            // Remove the plugin from the dom.
-            this.body.dom.innerHTML = "";
             if (this.earth != null) {
                 this.updateMap();
             }
+            // Remove the plugin from the dom.
+            this.body.dom.innerHTML = "";
             this.earth = null;
         }, this);
     },

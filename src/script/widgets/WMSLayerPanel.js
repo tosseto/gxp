@@ -1,7 +1,11 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
+<<<<<<< HEAD
  *
  * Published under the BSD license.
+=======
+ * 
+ * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
  */
@@ -69,6 +73,7 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
      */
     transparent: null,
 
+
     /** private: property[editableStyles]
      *  ``Boolean``
      */
@@ -102,6 +107,8 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
     displayText: "Display",
     opacityText: "Opacity",
     formatText: "Format",
+    infoFormatText: "Info format",
+    infoFormatEmptyText: "Select a format",
     transparentText: "Transparent",
     cacheText: "Cache",
     cacheFieldText: "Use cached version",
@@ -128,8 +135,12 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
 
         // only add the Styles panel if we know for sure that we have styles
         if (this.styling && gxp.WMSStylesDialog && this.layerRecord.get("styles")) {
-            var url = (this.source || this.layerRecord.get("layer")).url.split(
-                "?").shift().replace(/\/(wms|ows)\/?$/, "/rest");
+            // TODO: revisit this
+            var url = this.layerRecord.get("restUrl");
+            if (!url) {
+                url = (this.source || this.layerRecord.get("layer")).url.split(
+                    "?").shift().replace(/\/(wms|ows)\/?$/, "/rest");
+            }
             if (this.sameOriginStyling) {
                 // this could be made more robust
                 // for now, only style for sources with relative url
@@ -352,6 +363,39 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                             this.transparent = null;
                         }
                         transCheck.setDisabled(format == "image/jpeg");
+                        this.fireEvent("change");
+                    },
+                    scope: this
+                }
+            }, {
+                xtype: "combo",
+                fieldLabel: this.infoFormatText,
+                emptyText: this.infoFormatEmptyText,
+                store: record.get("infoFormats"),
+                value: record.get("infoFormat"),
+                hidden: (record.get("infoFormats") === undefined),
+                mode: 'local',
+                triggerAction: "all",
+                editable: false,
+                anchor: "99%",
+                listeners: {
+                    select: function(combo) {
+                        var infoFormat = combo.getValue();
+                        record.set("infoFormat", infoFormat);
+                        this.fireEvent("change");
+                    }
+                },
+                scope: this
+            }, {
+                xtype: "checkbox",
+                id: 'transparent',
+                fieldLabel: this.transparentText,
+                checked: transparent,
+                listeners: {
+                    check: function(checkbox, checked) {
+                        layer.mergeNewParams({
+                            transparent: checked ? "true" : "false"
+                        });
                         this.fireEvent("change");
                     },
                     scope: this

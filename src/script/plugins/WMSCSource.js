@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
  * 
- * Published under the BSD license.
+ * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
  */
@@ -82,11 +82,17 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
      */
     createLayerRecord: function(config) {
         var record = gxp.plugins.WMSCSource.superclass.createLayerRecord.apply(this, arguments);
-        var caps = this.store.reader.raw.capability;
+        if (!record) {
+            return;
+        }
+        var caps;
+        if (this.store.reader.raw) {
+            caps = this.store.reader.raw.capability;
+        }
         var tileSets = (caps && caps.vendorSpecific && caps.vendorSpecific) ? 
             caps.vendorSpecific.tileSets : null;
-        if (tileSets !== null && record != null) {
-            var layer = record.get("layer");
+        var layer = record.get("layer");
+        if (tileSets !== null) {
             var mapProjection = this.getMapProjection();
             // look for tileset with same name and equivalent projection
             for (var i=0, len=tileSets.length; i<len; i++) {
@@ -111,6 +117,11 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
                     }
                 }
             }
+        } else if (this.forceLazy === true && config.cached === true) {
+            // if lazy loading is forced, and the cached version is explicitly
+            // requested, set TILED to true and assume that the tiling scheme
+            // for the layer works with the map bounds and resolutions.
+            layer.params.TILED = true;
         }
         return record;
     },

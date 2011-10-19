@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
  * 
- * Published under the BSD license.
+ * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
  */
@@ -57,6 +57,14 @@ gxp.plugins.Styler = Ext.extend(gxp.plugins.Tool, {
      *  supported. Default is ``false``.
      */
     rasterStyling: false,
+    
+    /** api: config[requireDescribeLayer]
+     *  ``Boolean`` If set to false, styling will be enabled for all WMS layers
+     *  that have "/ows" or "/wms" at the end of their base url in case the WMS
+     *  does not support DescribeLayer. Only set to false when rasterStyling is
+     *  set to true. Default is true.
+     */
+    requireDescribeLayer: true,
     
     constructor: function(config) {
         gxp.plugins.Styler.superclass.constructor.apply(this, arguments);
@@ -123,15 +131,24 @@ gxp.plugins.Styler = Ext.extend(gxp.plugins.Tool, {
      *  action.
      */
     checkIfStyleable: function(layerRec, describeRec) {
-        var owsTypes = ["WFS"];
-        if (this.rasterStyling === true) {
-            owsTypes.push("WCS");
+        if (describeRec) {
+            var owsTypes = ["WFS"];
+            if (this.rasterStyling === true) {
+                owsTypes.push("WCS");
+            }
         }
-        if (describeRec && owsTypes.indexOf(describeRec.get("owsType")) !== -1) {
+        if (describeRec ? owsTypes.indexOf(describeRec.get("owsType")) !== -1 : !this.requireDescribeLayer) {
             var editableStyles = false;
             var source = this.target.layerSources[layerRec.get("source")];
-            var url = source.url.split("?")
-                .shift().replace(/\/(wms|ows)\/?$/, "/rest/styles");
+            var url;
+            // TODO: revisit this
+            var restUrl = layerRec.get("restUrl");
+            if (restUrl) {
+                url = restUrl + "/styles";
+            } else {
+                url = source.url.split("?")
+                    .shift().replace(/\/(wms|ows)\/?$/, "/rest/styles");
+            }
             if (this.sameOriginStyling) {
                 // this could be made more robust
                 // for now, only style for sources with relative url
