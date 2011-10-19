@@ -129,7 +129,7 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
 
     /** api: property[fonts]
      *
-     * @type
+     * @type array
      */
     fonts: null,
 
@@ -637,17 +637,12 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
         // mark the style as modified
         this.selectedStyle.store.afterEdit(this.selectedStyle);
     },
-<<<<<<< HEAD
 
-    /** private: method[removeRulesFieldSet[
-     *  Removes rulesFieldSet when the legend image cannot be loaded
-=======
     
     /** private: method[setRulesFieldSetVisible]
      *  :arg visible: ``Boolean``
      *
      *  Sets the visibility of the rules fieldset
->>>>>>> gxpcore/master
      */
     setRulesFieldSetVisible: function(visible) {
         // the toolbar
