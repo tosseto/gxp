@@ -382,20 +382,6 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
                     }
                 },
                 scope: this
-            }, {
-                xtype: "checkbox",
-                id: 'transparent',
-                fieldLabel: this.transparentText,
-                checked: transparent,
-                listeners: {
-                    check: function(checkbox, checked) {
-                        layer.mergeNewParams({
-                            transparent: checked ? "true" : "false"
-                        });
-                        this.fireEvent("change");
-                    },
-                    scope: this
-                }
             },
             transCheck]
         };
