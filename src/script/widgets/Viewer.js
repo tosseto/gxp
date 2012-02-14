@@ -7,6 +7,18 @@
  * of the license.
  */
 
+/**
+ * @requires util.js
+ * @requires OpenLayers/Control/Attribution.js
+ * @requires OpenLayers/Control/ZoomPanel.js
+ * @requires OpenLayers/Control/Navigation.js
+ * @requires OpenLayers/Kinetic.js
+ * @requires OpenLayers/Control/PanPanel.js
+ * @requires GeoExt/widgets/MapPanel.js
+ * @requires GeoExt/widgets/ZoomSlider.js
+ * @requires GeoExt/widgets/tips/ZoomSliderTip.js
+ */
+
 /** api: (define)
  *  module = gxp
  *  class = Viewer
@@ -229,12 +241,19 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
              *  Fired when features were edited.
              *
              *  Listener arguments:
-             *  * featureManager - ``gxp.plugins.FeatureManager`` the
+             *
+             *  * featureManager - :class:`gxp.plugins.FeatureManager` the
              *    the feature manager that was used for editing
              *  * layer - ``Object`` object with name and source of the layer
              *    that was edited
              */
-            "featureedit"
+            "featureedit",
+
+            /** api: event[authorizationchange]
+             *  Fired when the authorizedRoles are changed, e.g. when a user 
+             *  logs in or out.
+             */
+            "authorizationchange"
         );
 
         Ext.apply(this, {
@@ -400,7 +419,10 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             map: Ext.applyIf({
                 theme: mapConfig.theme || null,
                 controls: mapConfig.controls || [
-                    new OpenLayers.Control.Navigation({zoomWheelOptions: {interval: 250}}),
+                    new OpenLayers.Control.Navigation({
+                        zoomWheelOptions: {interval: 250},
+                        dragPanOptions: {enableKinetic: true}
+                    }),
                     new OpenLayers.Control.PanPanel(),
                     new OpenLayers.Control.ZoomPanel(),
                     new OpenLayers.Control.Attribution()
@@ -415,7 +437,13 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             layers: null,
             items: this.mapItems,
             plugins: this.mapPlugins,
-            tbar: config.tbar || {hidden: true}
+            tbar: config.tbar || new Ext.Toolbar({
+                hidden: true,
+                listeners: {
+                    show: function() { this.mapPanel.map.updateSize(); },
+                    scope: this
+                }
+            })
         }, config));
 
         this.mapPanel.layers.on({
@@ -588,14 +616,15 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
      *  Check through createLayerRecord requests to see if any can be satisfied.
      */
     checkLayerRecordQueue: function() {
-        var request, source, record, called;
+        var request, source, s, record, called;
         var remaining = [];
         for (var i=0, ii=this.createLayerRecordQueue.length; i<ii; ++i) {
             called = false;
             request = this.createLayerRecordQueue[i];
-            source = request.config.source;
-            if (source in this.layerSources) {
-                record = this.layerSources[source].createLayerRecord(request.config);
+            s = request.config.source;
+            if (s in this.layerSources) {
+                source = this.layerSources[s];
+                record = source.createLayerRecord(request.config);
                 if (record) {
                     // we call this in the next cycle to guarantee that
                     // createLayerRecord returns before callback is called
@@ -605,6 +634,11 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
                         }, 0);
                     })(request, record);
                     called = true;
+                } else if (source.lazy) {
+                    source.store.load({
+                        callback: this.checkLayerRecordQueue,
+                        scope: this
+                    });
                 }
             }
             if (!called) {
@@ -638,7 +672,9 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
             layers: []
         });
 
-        // include all layer config (and add new sources)
+        
+        // include all layer config
+        var sources = {};
         this.mapPanel.layers.each(function(record){
             var layer = record.getLayer();
             if (layer.displayInLayerSwitcher) {
@@ -649,12 +685,38 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
                 }
                 // add layer
                 state.map.layers.push(source.getConfigForRecord(record));
-                if (!state.sources[id]) {
-                    state.sources[id] = Ext.apply({}, source.initialConfig);
+                if (!sources[id]) {
+                    sources[id] = source.getState();
                 }
             }
         }, this);
 
+        // update sources, adding new ones
+        Ext.apply(this.sources, sources);
+        
+        //standardize portal configuration to portalConfig
+        if (state.portalItems) {
+            //initial config included both portal config and items
+            if (state.portalConfig && state.portalConfig.items && state.portalConfig.items.length) {
+                //merge arrays of portalItems and portalConfig.items
+                for (var items = state.portalItems, i = 0, len = items.length; i < len; i++) {
+                    var item = items[i];
+                    if (state.portalConfig.items.indexOf(item) == -1) {
+                        state.portalConfig.items.push(item);
+                    }
+                }
+            }
+            else if (state.portalItems && state.portalItems.length) {
+                !state.portalConfig && (state.portalConfig = {});
+                state.portalConfig.items = state.portalItems;
+            }
+        }
+        
+        //get tool states, for most tools this will be the same as its initial config
+        state.tools = [];
+        Ext.iterate(this.tools,function(key,val,obj){
+            state.tools.push(val.getState());
+        });
         return state;
     },
 
@@ -682,6 +744,18 @@ gxp.Viewer = Ext.extend(Ext.util.Observable, {
         return !this.authorizedRoles ||
             (this.authorizedRoles.indexOf(role || "ROLE_ADMINISTRATOR") !== -1);
     },
+
+
+    /** api: method[setAuthorizedRoles]
+     *  :arg authorizedRoles: ``Array``
+     *
+     *  Change the authorized roles.
+     */
+    setAuthorizedRoles: function(authorizedRoles) {
+        this.authorizedRoles = authorizedRoles;
+        this.fireEvent("authorizationchange");
+    },
+    
 
     /** api: method[isAuthenticated]
      *  :returns: ``Boolean`` The user has authenticated.

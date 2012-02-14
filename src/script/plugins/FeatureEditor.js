@@ -9,6 +9,12 @@
 /**
  * @requires plugins/ClickableFeatures.js
  * @requires widgets/FeatureEditPopup.js
+ * @requires util.js
+ * @requires OpenLayers/Control/DrawFeature.js
+ * @requires OpenLayers/Handler/Point.js
+ * @requires OpenLayers/Handler/Path.js
+ * @requires OpenLayers/Handler/Polygon.js
+ * @requires OpenLayers/Control/SelectFeature.js
  */
 
 /** api: (define)
@@ -38,6 +44,20 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      */
     iconClsAdd: "gxp-icon-addfeature",
 
+    /** api: config[supportAbstractGeometry]
+     *  Should we support layers that advertize an abstract geometry type?
+     *  In this case, we will provide menu options for digitizing point, line
+     *  or polygon features. Default is false.
+     */
+    supportAbstractGeometry: false,
+
+    /** api: config[supportNoGeometry]
+     *  Should we support the ability to create features with no geometry?
+     *  This only works when combined with supportAbstractGeometry: true.
+     *  Default is false.
+     */
+    supportNoGeometry: false,
+
     /** api: config[iconClsEdit]
      *  ``String``
      *  iconCls to use for the edit button.
@@ -47,6 +67,10 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
     /** i18n **/
     exceptionTitle: "Save Failed",
     exceptionText: "Trouble saving features",
+    pointText: "Point",
+    lineText: "Line",
+    polygonText: "Polygon",
+    noGeometryText: "Event",
 
     /** api: config[createFeatureActionTip]
      *  ``String``
@@ -93,16 +117,6 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      */
     modifyOnly: false,
     
-    /** api: config[autoLoadFeatures]
-     *  ``Boolean`` Should this tool load features on click? If set to true,
-     *  and if there is no loaded feature at the click position, this tool will
-     *  call loadFeatures on the ``featureManager``, with a ``FeatureId``
-     *  filter created from the id of a feature returned from a WMS
-     *  GetFeatureInfo request at the click position. This feature will then be
-     *  selected immediately. Default is false.
-     */
-    autoLoadFeatures: false,
-    
     /** api: config[showSelectedOnly]
      *  ``Boolean`` If set to true, only selected features will be displayed
      *  on the layer. If set to false, all features (on the current page) will
@@ -132,12 +146,6 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      *  :class:`gxp.FeatureEditPopup` FeatureEditPopup for this tool
      */
     popup: null,
-    
-    /** private: property[autoLoadedFeature]
-     *  ``OpenLayers.Feature`` the auto-loaded feature when autoLoadFeatures is
-     *  true.
-     */
-    autoLoadedFeature: null,
     
     /** private: property[schema]
      *  ``GeoExt.data.AttributeStore``
@@ -179,6 +187,21 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
 
         );
         gxp.plugins.FeatureEditor.superclass.constructor.apply(this, arguments);        
+    },
+
+    /** private: method[init]
+     *  :arg target: ``Object`` The object initializing this plugin.
+     */
+    init: function(target) {
+        gxp.plugins.FeatureEditor.superclass.init.apply(this, arguments);
+        this.target.on("authorizationchange", this.enableOrDisable, this);
+    },
+
+    /** private: method[destroy]
+     */
+    destroy: function() {
+        this.target.un("authorizationchange", this.enableOrDisable, this);
+        gxp.plugins.FeatureEditor.superclass.destroy.apply(this, arguments);
     },
 
     /** api: method[addActions]
@@ -243,7 +266,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
             {
                 eventListeners: {
                     featureadded: function(evt) {
-                        if (this.autoLoadFeatures === true) {
+                        if (this.autoLoadFeature === true) {
                             this.autoLoadedFeature = evt.feature;
                         }
                     },
@@ -276,7 +299,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
             },
             eventListeners: {
                 "activate": function() {
-                    if (this.autoLoadFeatures === true || featureManager.paging) {
+                    if (this.autoLoadFeature === true || featureManager.paging) {
                         this.target.mapPanel.map.events.register(
                             "click", this, this.noFeatureClick
                         );
@@ -289,7 +312,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
                     );
                 },
                 "deactivate": function() {
-                    if (this.autoLoadFeatures === true || featureManager.paging) {
+                    if (this.autoLoadFeature === true || featureManager.paging) {
                         this.target.mapPanel.map.events.unregister(
                             "click", this, this.noFeatureClick
                         );
@@ -346,7 +369,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
                     this.fireEvent("featureeditable", this, feature, true);
                 }
                 var featureStore = featureManager.featureStore;
-                if(this.selectControl.active && feature.geometry !== null) {
+                if(this._forcePopupForNoGeometry === true || (this.selectControl.active && feature.geometry !== null)) {
                     // deactivate select control so no other features can be
                     // selected until the popup is closed
                     if (this.readOnly === false) {
@@ -478,8 +501,11 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
         });
 
         var toggleGroup = this.toggleGroup || Ext.id();
-        var actions = gxp.plugins.FeatureEditor.superclass.addActions.call(this, [new GeoExt.Action({
+
+        var actions = [];
+        var commonOptions = {
             tooltip: this.createFeatureActionTip,
+            menuText: this.createFeatureActionText,
             text: this.createFeatureActionText,
             iconCls: this.iconClsAdd,
             disabled: true,
@@ -490,9 +516,89 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
             control: this.drawControl,
             deactivateOnDisable: true,
             map: this.target.mapPanel.map
-        }), new GeoExt.Action({
+        };
+        if (this.supportAbstractGeometry === true) {
+            var menuItems = [];
+            if (this.supportNoGeometry === true) {
+                menuItems.push(
+                    new Ext.menu.CheckItem({
+                        text: this.noGeometryText,
+                        iconCls: "gxp-icon-event",
+                        groupClass: null,
+                        group: toggleGroup,
+                        listeners: {
+                            checkchange: function(item, checked) {
+                                if (checked === true) {
+                                    var feature = new OpenLayers.Feature.Vector(null);
+                                    feature.state = OpenLayers.State.INSERT;
+                                    featureLayer.addFeatures([feature]);
+                                    this._forcePopupForNoGeometry = true;
+                                    featureLayer.events.triggerEvent("featureselected", {feature: feature});
+                                    delete this._forcePopupForNoGeometry;
+                                }
+                                if (this.actions[0].items[0] instanceof Ext.menu.CheckItem) {
+                                    this.actions[0].items[0].setChecked(false);
+                                } else {
+                                    this.actions[0].items[0].toggle(false);
+                                }
+                            },
+                            scope: this
+                        }
+                    })
+                );
+            }
+            var checkChange = function(item, checked, Handler) {
+                if (checked === true) {
+                    this.setHandler(Handler, false);
+                }
+                if (this.actions[0].items[0] instanceof Ext.menu.CheckItem) {
+                    this.actions[0].items[0].setChecked(checked);
+                } else {
+                    this.actions[0].items[0].toggle(checked);
+                }
+            };
+            menuItems.push(
+                new Ext.menu.CheckItem({
+                    groupClass: null,
+                    text: this.pointText,
+                    group: toggleGroup,
+                    iconCls: 'gxp-icon-point',
+                    listeners: {
+                        checkchange: checkChange.createDelegate(this, [OpenLayers.Handler.Point], 2)
+                    }
+                }),
+                new Ext.menu.CheckItem({
+                    groupClass: null,
+                    text: this.lineText,
+                    group: toggleGroup,
+                    iconCls: 'gxp-icon-line',
+                    listeners: {
+                        checkchange: checkChange.createDelegate(this, [OpenLayers.Handler.Path], 2)
+                    }
+                }),
+                new Ext.menu.CheckItem({
+                    groupClass: null,
+                    text: this.polygonText,
+                    group: toggleGroup,
+                    iconCls: 'gxp-icon-polygon',
+                    listeners: {
+                        checkchange: checkChange.createDelegate(this, [OpenLayers.Handler.Polygon], 2)
+                    }
+                })
+            );
+
+            actions.push(
+                new GeoExt.Action(Ext.apply(commonOptions, {
+                    menu: new Ext.menu.Menu({items: menuItems})
+                }))
+            );
+        } else {
+            actions.push(new GeoExt.Action(commonOptions));
+        }
+        actions.push(new GeoExt.Action({
             tooltip: this.editFeatureActionTip,
             text: this.editFeatureActionText,
+            menuText: this.editFeatureActionText,
             iconCls: this.iconClsEdit,
             disabled: true,
             toggleGroup: toggleGroup,
@@ -501,15 +607,17 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
             control: this.selectControl,
             deactivateOnDisable: true,
             map: this.target.mapPanel.map
-        })]);
+        }));
+
+        actions = gxp.plugins.FeatureEditor.superclass.addActions.call(this, actions);
 
         featureManager.on("layerchange", this.onLayerChange, this);
-        
+
         var snappingAgent = this.getSnappingAgent();
         if (snappingAgent) {
             snappingAgent.registerEditor(this);
         }
-        
+
         return actions;
     },
 
@@ -538,6 +646,32 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
         }
         return agent;
     },
+
+    setHandler: function(Handler, multi) {
+        var control = this.drawControl;
+        var active = control.active;
+        if(active) {
+            control.deactivate();
+        }
+        control.handler.destroy(); 
+        control.handler = new Handler(
+            control, control.callbacks,
+            Ext.apply(control.handlerOptions, {multi: multi})
+        );
+        if(active) {
+            control.activate();
+        } 
+    },
+
+    /**
+     * private: method[enableOrDisable]
+     */
+    enableOrDisable: function() {
+        var disable = !this.schema || !this.target.isAuthorized();
+        this.actions[0].setDisabled(disable);
+        this.actions[1].setDisabled(disable);
+        return disable;
+    },
     
     /** private: method[onLayerChange]
      *  :arg mgr: :class:`gxp.plugins.FeatureManager`
@@ -546,9 +680,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      */
     onLayerChange: function(mgr, layer, schema) {
         this.schema = schema;
-        var disable = !schema || !this.target.isAuthorized();
-        this.actions[0].setDisabled(disable);
-        this.actions[1].setDisabled(disable);
+        var disable = this.enableOrDisable();
         if (disable) {
             // not a wfs capable layer or not authorized
             this.fireEvent("layereditable", this, layer, false);
@@ -567,17 +699,10 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
         var simpleType = mgr.geometryType.replace("Multi", "");
         var Handler = handlers[simpleType];
         if (Handler) {
-            var active = control.active;
-            if(active) {
-                control.deactivate();
-            }
-            control.handler = new Handler(
-                control, control.callbacks,
-                Ext.apply(control.handlerOptions, {multi: (simpleType != mgr.geometryType)})
-            );
-            if(active) {
-                control.activate();
-            }
+            var multi = (simpleType != mgr.geometryType);
+            this.setHandler(Handler, multi);
+            button.enable();
+        } else if (this.supportAbstractGeometry === true && mgr.geometryType === 'Geometry') {
             button.enable();
         } else {
             button.disable();

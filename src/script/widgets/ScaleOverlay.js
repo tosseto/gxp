@@ -6,6 +6,11 @@
  * of the license.
  */
 
+/**
+ * @requires OpenLayers/Control/ScaleLine.js
+ * @requires GeoExt/data/ScaleStore.js
+ */
+
 /** api: (define)
  *  module = gxp
  *  class = ScaleOverlay
@@ -98,6 +103,7 @@ gxp.ScaleOverlay = Ext.extend(Ext.Panel, {
         }, this);
         scaleLinePanel.on('render', function(){
             var scaleLine = new OpenLayers.Control.ScaleLine({
+                geodesic: true,
                 div: scaleLinePanel.getEl().dom
             });
 

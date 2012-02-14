@@ -8,6 +8,7 @@
 
 /**
  * @requires plugins/LayerSource.js
+ * @requires OpenLayers/Layer/TMS.js
  */
 
 /** api: (define)
@@ -149,6 +150,7 @@ gxp.plugins.MapBoxSource = Ext.extend(gxp.plugins.LayerSource, {
                     type: "png",
                     tileOrigin: new OpenLayers.LonLat(-128 * 156543.0339, -128 * 156543.0339),
                     layername: config.name,
+                    "abstract": '<div class="thumb-mapbox thumb-mapbox-'+config.name+'"></div>',
                     numZoomLevels: config.numZoomLevels
                 }, options)
             );
@@ -159,7 +161,7 @@ gxp.plugins.MapBoxSource = Ext.extend(gxp.plugins.LayerSource, {
             fields: [
                 {name: "source", type: "string"},
                 {name: "name", type: "string", mapping: "layername"},
-                {name: "abstract", type: "string", mapping: "attribution"},
+                {name: "abstract", type: "string"},
                 {name: "group", type: "string"},
                 {name: "fixed", type: "boolean"},
                 {name: "selected", type: "boolean"}

@@ -8,7 +8,8 @@
 
 /**
  * @requires plugins/ClickableFeatures.js
- * @include widgets/grid/FeatureGrid.js
+ * @requires widgets/grid/FeatureGrid.js
+ * @requires GeoExt/widgets/grid/FeatureSelectionModel.js
  */
 
 /** api: (define)
@@ -144,7 +145,9 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
         var map = this.target.mapPanel.map, smCfg;
         // a minimal SelectFeature control - used just to provide select and
         // unselect, won't be added to the map unless selectOnMap is true
-        this.selectControl = new OpenLayers.Control.SelectFeature(featureManager.featureLayer);
+        this.selectControl = new OpenLayers.Control.SelectFeature(
+            featureManager.featureLayer, this.initialConfig.controlOptions
+        );
         if (this.selectOnMap) {
              if (featureManager.paging) {
                 this.selectControl.events.on({
@@ -240,24 +243,29 @@ gxp.plugins.FeatureGrid = Ext.extend(gxp.plugins.ClickableFeatures, {
             }] : [])),
             listeners: {
                 "added": function(cmp, ownerCt) {
-                    var onClear = (function() {
+                    function onClear() {
                         this.displayTotalResults();
                         this.selectOnMap && this.selectControl.deactivate();
                         this.autoCollapse && typeof ownerCt.collapse == "function" &&
                             ownerCt.collapse();
-                    }).bind(this);
-                    var onPopulate = (function() {
+                    }
+                    function onPopulate() {
                         this.displayTotalResults();
                         this.selectOnMap && this.selectControl.activate();
                         this.autoExpand && typeof ownerCt.expand == "function" &&
                             ownerCt.expand();
-                    }).bind(this);
+                    }
                     featureManager.on({
                         "query": function(tool, store) {
-                            store && store.getCount() ? onPopulate() : onClear();
+                            if (store && store.getCount()) {
+                                onPopulate.call(this);
+                            } else {
+                                onClear.call(this);
+                            }
                         },
                         "layerchange": onClear,
-                        "clearfeatures": onClear
+                        "clearfeatures": onClear,
+                        scope: this
                     });
                 },
                 contextmenu: function(event) {

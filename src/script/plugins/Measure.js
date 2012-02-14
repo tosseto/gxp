@@ -8,6 +8,9 @@
 
 /**
  * @requires plugins/Tool.js
+ * @requires OpenLayers/StyleMap.js
+ * @requires OpenLayers/Rule.js
+ * @requires OpenLayers/Control/Measure.js
  */
 
 /** api: (define)
@@ -172,26 +175,6 @@ gxp.plugins.Measure = Ext.extend(gxp.plugins.Tool, {
                         measureToolTip.targetXY = [p0[0] + px.x, p0[1] + px.y];
                         measureToolTip.show();
                     }
-                },
-                measure: function(event) {
-                    cleanup();
-                    measureToolTip = this.addOutput({
-                        xtype: 'tooltip',
-                        target: Ext.getBody(),
-                        html: makeString(event),
-                        title: title,
-                        autoHide: false,
-                        closable: true,
-                        draggable: false,
-                        mouseOffset: [0, 0],
-                        showDelay: 1,
-                        listeners: {
-                            hide: function() {
-                                measureControl.cancel();
-                                cleanup();
-                            }
-                        }
-                    });
                 },
                 deactivate: cleanup,
                 scope: this

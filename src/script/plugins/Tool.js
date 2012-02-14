@@ -6,6 +6,10 @@
  * of the license.
  */
 
+/**
+ * @requires GeoExt/widgets/Action.js
+ */
+
 /** api: (define)
  *  module = gxp.plugins
  *  class = Tool
@@ -236,12 +240,19 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
                 }
                 parts = actionTarget.split(".");
                 ref = parts[0];
+                if (ref) {
+                    if (ref == "map") {
+                        ct = this.target.mapPanel;
+                    } else {
+                        ct = Ext.getCmp(ref) || this.target.portal[ref];
+                        if (!ct) {
+                            throw new Error("Can't find component with id: " + ref);
+                        }
+                    }
+                } else {
+                    ct = this.target.portal;
+                }
                 item = parts.length > 1 && parts[1];
-                ct = ref ?
-                    ref == "map" ?
-                        this.target.mapPanel :
-                        (Ext.getCmp(ref) || this.target.portal[ref]) :
-                    this.target.portal;
                 if (item) {
                     meth = {
                         "tbar": "getTopToolbar",
@@ -272,9 +283,11 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
                 }
                 if (ct) {
                     if (ct instanceof Ext.menu.Menu) {
-                        action = Ext.apply(new Ext.menu.Item(action),
-                            {text: action.initialConfig.menuText}
-                        );
+                        action = Ext.apply(new Ext.menu.CheckItem(action), {
+                            text: action.initialConfig.menuText,
+                            group: action.initialConfig.toggleGroup,
+                            groupClass: null
+                        });
                     } else if (!(ct instanceof Ext.Toolbar)) {
                         // only Ext.menu.Menu and Ext.Toolbar containers
                         // support the Action interface. So if our container is
@@ -384,8 +397,16 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
             }
         }
         this.output = [];
-    }
+    },
     
+    /** api: method[getState]
+     *  :return {Object}
+     *  Gets the configured tool state. Overwrite in subclasses to return
+     *  anything other than a copy of the initialConfig property.
+     */
+    getState: function(){
+        return Ext.apply({}, this.initialConfig);
+    }
 });
 
 Ext.preg(gxp.plugins.Tool.prototype.ptype, gxp.plugins.Tool);

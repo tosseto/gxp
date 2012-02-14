@@ -8,6 +8,10 @@
 
 /**
  * @requires plugins/Tool.js
+ * @requires OpenLayers/Protocol/HTTP.js
+ * @requires OpenLayers/Control/SelectFeature.js
+ * @requires OpenLayers/Format/WMSGetFeatureInfo.js
+ * @requires OpenLayers/Filter/FeatureId.js
  */
 
 /** api: (define)
@@ -34,6 +38,22 @@ gxp.plugins.ClickableFeatures = Ext.extend(gxp.plugins.Tool, {
      */
     featureManager: null,
     
+    /** api: config[autoLoadFeature]
+     *  ``Boolean`` Should this tool load a feature on click? If set to true,
+     *  and if there is no loaded feature at the click position, this tool will
+     *  call loadFeatures on the ``featureManager``, with a ``FeatureId``
+     *  filter created from the id of a feature returned from a WMS
+     *  GetFeatureInfo request at the click position. This feature will then be
+     *  selected immediately. Default is false.
+     */
+    autoLoadFeature: false,
+    
+    /** private: property[autoLoadedFeature]
+     *  ``OpenLayers.Feature`` the auto-loaded feature when
+     *  :attr:`autoLoadFeature` is true.
+     */
+    autoLoadedFeature: null,
+    
     /** api: config[tolerance]
      *  ``Number`` 
      *  Optional pixel tolerance to use when selecting features.  By default,
@@ -57,13 +77,34 @@ gxp.plugins.ClickableFeatures = Ext.extend(gxp.plugins.Tool, {
      *  will be created when ``noFeatureClick`` is called for the first time.
      */
     
+    /** api: config[controlOptions]
+     *  ``Object`` Options for the ``OpenLayers.Control.SelectFeature`` used
+     *  with this tool.
+     */
+
+    /** private: method[constructor]
+     */
+    constructor: function(config) {
+        // deal with deprecated autoLoadFeatures config option
+        //TODO remove this before we cut a release
+        if (config && "autoLoadFeatures" in config) {
+            config.autoLoadFeature = config.autoLoadFeatures;
+            delete config.autoLoadFeatures;
+            window.setTimeout(function() {
+                throw("Deprecated config option 'autoLoadFeatures' for ptype: '" + config.ptype + "'. Use 'autoLoadFeature' instead.");
+            }, 0);
+        }
+        gxp.plugins.ClickableFeatures.superclass.constructor.apply(this, [config]);
+    },
+    
     /** private: method[noFeatureClick]
      *  :arg evt: ``Object``
      */
     noFeatureClick: function(evt) {
         if (!this.selectControl) {
             this.selectControl = new OpenLayers.Control.SelectFeature(
-                this.target.tools[this.featureManager].featureLayer
+                this.target.tools[this.featureManager].featureLayer,
+                this.initialConfig.controlOptions
             );
         }
         var evtLL = this.target.mapPanel.map.getLonLatFromPixel(evt.xy);
@@ -152,7 +193,7 @@ gxp.plugins.ClickableFeatures = Ext.extend(gxp.plugins.Tool, {
                                 var feature = featureManager.featureLayer.getFeatureByFid(fid);
                                 if (feature) {
                                     this.select(feature);
-                                } else if (this.autoLoadFeatures === true) {
+                                } else if (this.autoLoadFeature === true) {
                                     autoLoad();
                                 }
                             }, this);
