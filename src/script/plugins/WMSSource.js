@@ -268,7 +268,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             SERVICE: "WMS",
             REQUEST: "GetCapabilities",
             VERSION: "1.1.1",
-            RANDOMIZE:  + "rnd" + Math.floor(Math.random()*10001) //Prevent IE from caching results
+            RANDOMIZE: "rnd" + Math.floor(Math.random()*10001) //Prevent IE from caching results
         };
         if (this.version) {
             baseParams.VERSION = this.version;
