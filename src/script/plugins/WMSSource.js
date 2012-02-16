@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -40,7 +40,7 @@
     }
     Ext.intercept(GeoExt.data.WMSCapabilitiesReader.prototype, "readRecords", keepRaw);
     GeoExt.data.AttributeReader &&
-        Ext.intercept(GeoExt.data.AttributeReader.prototype, "readRecords", keepRaw);
+    Ext.intercept(GeoExt.data.AttributeReader.prototype, "readRecords", keepRaw);
 })();
 
 /** api: (define)
@@ -98,8 +98,8 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
 
     /** private: config[restUrl]
      *  ``String`` Optional URL for rest configuration endpoint.  Note that this
-     *  property is being added for a specific GeoNode case and it may be 
-     *  removed if an alternate solution is chosen (like a specific 
+     *  property is being added for a specific GeoNode case and it may be
+     *  removed if an alternate solution is chosen (like a specific
      *  GeoNodeSource).  This is used where the rest config endpoint cannot
      *  be derived from the source url (e.g. source url "/geoserver" and rest
      *  config url "/other_rest_proxy").
@@ -142,7 +142,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      *  If specified, the version string will be included in WMS GetCapabilities
      *  requests.  By default, no version is set.
      */
-    
+
     /** api: config[requiredProperties]
      *  ``Array(String)`` List of config properties that are required for each
      *  layer from this source to allow lazy loading, in addition to ``name``.
@@ -152,13 +152,13 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      *  WMS layer name), ``bbox`` (the map's ``maxExtent`` as array), and
      *  ``srs`` (the map's ``projection``, e.g. "EPSG:4326").
      */
-    
+
     /** api: property[requiredProperties]
      *  ``Array(String)`` List of config properties that are required for a
      *  complete layer configuration, in addition to ``name``.
      */
     requiredProperties: ["title", "bbox"],
-    
+
     /** private: method[constructor]
      */
     constructor: function(config) {
@@ -207,11 +207,11 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      *
      *  The store for a lazy source will not be loaded upon creation.  A source
      *  determines whether or not it is lazy given the configured layers for
-     *  the target.  If the layer configs have all the information needed to 
+     *  the target.  If the layer configs have all the information needed to
      *  construct layer records, the source can be lazy.
      */
     isLazy: function() {
-        var lazy = true;
+        var lazy = false;
         var mapConfig = this.target.initialConfig.map;
         if (mapConfig && mapConfig.layers) {
             var layerConfig;
@@ -227,7 +227,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         }
         return lazy;
     },
-    
+
     /** private: method[layerConfigComplete]
      *  :returns: ``Boolean``
      *
@@ -243,7 +243,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                 if (lazy === false) {
                     break;
                 }
-            } 
+            }
         }
         return lazy;
     },
@@ -255,13 +255,12 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
     createStore: function() {
         var baseParams = this.baseParams || {
             SERVICE: "WMS",
-            REQUEST: "GetCapabilities",
-            VERSION: "1.1.1",
-            RANDOMIZE:  "rnd" + Math.floor(Math.random()*10001) //Prevent IE from caching results
+            REQUEST: "GetCapabilities"
         };
         if (this.version) {
             baseParams.VERSION = this.version;
         }
+
         var lazy = this.isLazy();
 
         this.store = new GeoExt.data.WMSCapabilitiesStore({
@@ -383,10 +382,9 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         return url.split("?").shift() + (keys ?
             "?" + OpenLayers.Util.getParameterString(urlParams) :
             ""
-        );
+            );
     },
 
-    
     /** private: method[createLazyLayerRecord]
      *  :arg config: ``Object`` The application config for this layer.
      *  :returns: ``GeoExt.data.LayerRecord``
@@ -395,15 +393,15 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
      */
     createLazyLayerRecord: function(config) {
         config = Ext.apply({}, config);
-        
+
         var srs = config.srs || this.target.map.projection;
         config.srs = {};
         config.srs[srs] = true;
-        
+
         var bbox = config.bbox || this.target.map.maxExtent;
         config.bbox = {};
         config.bbox[srs] = {bbox: bbox};
-        
+
         var record;
         if (this.store && this.store instanceof GeoExt.data.WMSCapabilitiesStore) {
             record = new this.store.recordType(config);
@@ -423,7 +421,6 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         record.json = config;
         return record;
     },
-     
 
     /** api: method[createLayerRecord]
      *  :arg config:  ``Object``  The application config for this layer.
@@ -465,7 +462,6 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             // us in dealing with the different EPSG codes for web mercator.
             var layerProjection = this.getProjection(original);
 
-
             var projCode = (layerProjection || projection).getCode(),
                 swapAxis = layer.params.VERSION >= "1.3" && !!layer.yx[projCode],
                 bbox = original.get("bbox"), maxExtent;
@@ -490,7 +486,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                 FORMAT: config.format,
                 TRANSPARENT: config.transparent
             }, layer.params);
-            
+
             var singleTile = false;
             if ("tiled" in config) {
                 singleTile = !config.tiled;
@@ -518,7 +514,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                     transitionEffect: singleTile ? 'resize' : null
                 }
             );
-            
+
             // data for the new record
             var data = Ext.applyIf({
                 title: layer.name,
@@ -687,7 +683,6 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         }
     },
 
-
     /** private: method[fetchSchema]
      *  :arg url: ``String`` The url fo the WFS endpoint
      *  :arg typeName: ``String`` The typeName to use
@@ -763,7 +758,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             }
         }, this);
     },
-    
+
     /** api: method[getWFSProtocol]
      *  :arg record: :class:`GeoExt.data.LayerRecord`
      *  :arg callback: ``Function``
@@ -834,7 +829,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             transparent: params.TRANSPARENT
         });
     },
-    
+
     /** private: method[getState] */
     getState: function() {
         var state = gxp.plugins.WMSSource.superclass.getState.apply(this, arguments);

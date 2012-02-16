@@ -414,7 +414,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 "server-added": function(url, sourceType) {
                     newSourceWindow.setLoading();
                     this.target.addLayerSource({
-                        config: {url: url,  ptype: sourceType },
+                        config: {url: url}, // assumes default of gx_wmssource
                         callback: function(id) {
                             // add to combo and select
                             var record = new sources.recordType({
