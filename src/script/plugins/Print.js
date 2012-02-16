@@ -96,9 +96,8 @@ gxp.plugins.Print = Ext.extend(gxp.plugins.Tool, {
     /** api: method[addActions]
      */
     addActions: function() {
-
         // don't add any action if there is no print service configured
-        if (this.printService !== null || this.printCapabilities !== null) {
+        if (this.printService !== null || this.printCapabilities != null) {
 
             var printProvider = new GeoExt.data.PrintProvider({
                 capabilities: this.printCapabilities,
@@ -165,7 +164,7 @@ gxp.plugins.Print = Ext.extend(gxp.plugins.Tool, {
                 }
             }]);
 
-            var printButton = this.actions[0].items[0];
+            var printButton = actions[0].items[0];
 
             var printWindow;
 

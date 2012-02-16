@@ -272,9 +272,11 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
                 }
                 if (ct) {
                     if (ct instanceof Ext.menu.Menu) {
-                        action = Ext.apply(new Ext.menu.Item(action),
-                            {text: action.initialConfig.menuText}
-                        );
+                        action = Ext.apply(new Ext.menu.CheckItem(action), {
+                            text: action.initialConfig.menuText,
+                            group: action.initialConfig.toggleGroup,
+                            groupClass: null
+                        });
                     } else if (!(ct instanceof Ext.Toolbar)) {
                         // only Ext.menu.Menu and Ext.Toolbar containers
                         // support the Action interface. So if our container is
@@ -384,8 +386,16 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
             }
         }
         this.output = [];
-    }
+    },
     
+    /** api: method[getState]
+     *  :return {Object}
+     *  Gets the configured tool state. Overwrite in subclasses to return
+     *  anything other than a copy of the initialConfig property.
+     */
+    getState: function(){
+        return Ext.apply({}, this.initialConfig);
+    }
 });
 
 Ext.preg(gxp.plugins.Tool.prototype.ptype, gxp.plugins.Tool);

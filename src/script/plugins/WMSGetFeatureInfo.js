@@ -68,11 +68,24 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
      *  parameters in the requests (e.g. {buffer: 10}).
      */
     
-    /** api: config[paramsFromLayer]
+    /** api: config[layerParams]
      *  ``Array`` List of param names that should be taken from the layer and
      *  added to the GetFeatureInfo request (e.g. ["CQL_FILTER"]).
      */
      
+    /** api: config[itemConfig]
+     *  ``Object`` A configuration object overriding options for the items that
+     *  get added to the popup for each server response or feature. By default,
+     *  each item will be configured with the following options:
+     *
+     *  .. code-block:: javascript
+     *
+     *      xtype: "propertygrid", // only for "grid" format
+     *      title: feature.fid ? feature.fid : title, // just title for "html" format
+     *      source: feature.attributes, // only for "grid" format
+     *      html: text, // responseText from server - only for "html" format
+     */
+
     /** api: method[addActions]
      */
     addActions: function() {
@@ -186,7 +199,6 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
                 width: 250,
                 height: 300,
                 defaults: {
-                    title: title,
                     layout: "fit",
                     autoScroll: true,
                     autoWidth: true,
@@ -211,16 +223,17 @@ gxp.plugins.WMSGetFeatureInfo = Ext.extend(gxp.plugins.Tool, {
             var feature;
             for (var i=0,ii=features.length; i<ii; ++i) {
                 feature = features[i];
-                config.push({
+                config.push(Ext.apply({
                     xtype: "propertygrid",
                     title: feature.fid ? feature.fid : title,
                     source: feature.attributes
-                });
+                }, this.itemConfig));
             }
         } else if (text) {
-            config.push(Ext.applyIf({
+            config.push(Ext.apply({
+                title: title,
                 html: text
-            }, baseConfig));
+            }, this.itemConfig));
         }
         popup.add(config);
         popup.doLayout();
