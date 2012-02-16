@@ -8,7 +8,6 @@
 
 /**
  * @requires plugins/LayerSource.js
- * @requires OpenLayers/Layer/Bing.js
  */
 
 /** api: (define)
@@ -101,22 +100,19 @@ gxp.plugins.BingSource = Ext.extend(gxp.plugins.LayerSource, {
                 key: this.apiKey,
                 name: this.roadTitle,
                 type: "Road",
-                buffer: 1,
-                transitionEffect: "resize"
+                buffer: 1
             }),
             new OpenLayers.Layer.Bing({
                 key: this.apiKey,
                 name: this.aerialTitle,
                 type: "Aerial",
-                buffer: 1,
-                transitionEffect: "resize"
+                buffer: 1
             }),
             new OpenLayers.Layer.Bing({
                 key: this.apiKey,
                 name: this.labeledAerialTitle,
                 type: "AerialWithLabels",
-                buffer: 1,
-                transitionEffect: "resize"
+                buffer: 1
             })
         ];
         
@@ -178,7 +174,7 @@ gxp.plugins.BingSource = Ext.extend(gxp.plugins.LayerSource, {
 
             record.data.layer = layer;
             record.commit();
-        }
+        };
         return record;
     }
 

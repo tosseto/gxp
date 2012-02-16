@@ -6,9 +6,6 @@
  * of the license.
  */
 
-/**
- * @requires util.js
- */
 
 Ext.namespace("gxp");
 

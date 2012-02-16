@@ -7,7 +7,6 @@
  */
 
 /**
- * @requires util.js
  * @requires plugins/StyleWriter.js
  */
 

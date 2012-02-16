@@ -9,7 +9,6 @@
 /**
  * @requires plugins/Tool.js
  * @requires widgets/PlaybackToolbar.js
- * @requires widgets/PlaybackOptionsPanel.js
  */
 
 /** api: (define)
@@ -67,38 +66,14 @@ gxp.plugins.Playback = Ext.extend(gxp.plugins.Tool, {
      */
     addOutput: function(config){
         delete this._ready;
-        config = Ext.applyIf(config || this.outputConfig || {}, {
+        config = config || {};
+        var toolbar = gxp.plugins.Playback.superclass.addOutput.call(this, Ext.apply(config,{
             xtype: 'gxp_playbacktoolbar',
             mapPanel:this.target.mapPanel,
-            playbackMode:this.playbackMode,
-            optionsWindow: new Ext.Window({
-                title: gxp.PlaybackOptionsPanel.prototype.titleText,
-                width: 300,
-                height: 425,
-                layout: 'fit',
-                items: [{xtype: 'gxp_playbackoptions'}],
-                closeable: true,
-                closeAction: 'hide',
-                renderTo: Ext.getBody(),
-                listeners: {
-                    'show': function(cmp){
-                        var optsPanel = cmp.findByType('gxp_playbackoptions')[0];
-                        optsPanel.fireEvent('show', optsPanel);
-                    },
-                    'hide': function(cmp){
-                        var optsPanel = cmp.findByType('gxp_playbackoptions')[0];
-                        optsPanel.fireEvent('hide', optsPanel);
-                    }
-                }
-            })
-        });
-        var toolbar = gxp.plugins.Playback.superclass.addOutput.call(this,config); 
-        this.relayEvents(toolbar,['timechange','rangemodified']);
+            playbackMode:this.playbackMode
+        }));
+        this.relayEvents(toolbar,['timechange','rangemodified'])
         this.playbackToolbar = toolbar;
-        //firing the 'rangemodified' event to indicate that the toolbar has been created with temporal layers
-        if(toolbar.control.layers){
-            this.fireEvent('rangemodified',this,toolbar.control.range);
-        }
         return toolbar;
     },
     addActions: function(actions){
@@ -131,55 +106,6 @@ gxp.plugins.Playback = Ext.extend(gxp.plugins.Tool, {
      */
     setTime: function(time){
         return this.playbackToolbar.setTime(time);
-    },
-
-    /** api: method[getState]
-     *  :returns {Object} - initial config plus any user configured settings
-     *  
-     *  Tool specific implementation of the getState function
-     */    
-    getState: function() {
-        var config = gxp.plugins.Playback.superclass.getState.call(this);
-        var toolbar = this.playbackToolbar;
-        if(toolbar) {
-            var control = toolbar.control;
-            config.outputConfig = Ext.apply(toolbar.initialConfig, {
-                dynamicRange : toolbar.dyanamicRange,
-                playbackMode : toolbar.playbackMode
-            });
-            if(control) {
-                config.outputConfig.controlConfig = {
-                    range : control.range, //(control.fixedRange) ? control.range : undefined,
-                    step : control.step,
-                    units : (control.units) ? control.units : undefined,
-                    loop : control.loop,
-                    snapToIntervals : control.snapToIntervals
-                };
-                if(control.timeAgents.length > 1) {
-                    var agents = control.timeAgents;
-                    var agentConfigs = [];
-                    for(var i = 0; i < agents.length; i++) {
-                        var agentConfig = {
-                            type : agents[i].CLASS_NAME.split("TimeAgent.")[1],
-                            rangeMode : agents[i].rangeMode,
-                            rangeInterval : agents[i].rangeInterval,
-                            intervals : agents[i].intervals,
-                            layers : []
-                        };
-                        for(var j = 0; j < agents[i].layers.length; j++) {
-                            var layerRec = app.mapPanel.layers.getByLayer(agents[i].layers[j]);
-                            agentConfig.layers.push(layerRec.jsonData);
-                        }
-                        agentConfigs.push(agentConfig);
-                    }
-                    config.outputConfig.controlConfig.timeAgents = agentConfigs;
-                }
-            }
-            //get rid of 2 instantiated objects that will cause problems
-            delete config.outputConfig.mapPanel;
-            delete config.outputConfig.optionsWindow;
-        }
-        return config;
     }
 });
 

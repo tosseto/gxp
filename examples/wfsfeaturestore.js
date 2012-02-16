@@ -65,7 +65,6 @@ Ext.onReady(function() {
         renderTo: "container",
         width: 650,
         height: 356,
-        map: {theme: null},
         layers: [
             new OpenLayers.Layer.WMS( 
                 "OpenLayers WMS",

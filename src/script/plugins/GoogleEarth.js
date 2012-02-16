@@ -102,7 +102,6 @@ gxp.plugins.GoogleEarth = Ext.extend(gxp.plugins.Tool, {
     apiKeyPrompt: "Please enter the Google API key for ",
     menuText: "3D Viewer",
     tooltip: "Switch to 3D Viewer",
-    tooltipMap: "Switch back to normal map view",
 
     /** private: method[constructor]
      */
@@ -167,7 +166,6 @@ gxp.plugins.GoogleEarth = Ext.extend(gxp.plugins.Tool, {
                             layout.setActiveItem(1);
                             // enable action press any buttons associated with the action
                             this.actions[0].enable();
-                            this.actions[0].items[0].setTooltip(this.tooltipMap);
                             this.actions[0].each(function(cmp) {
                                 if (cmp.toggle) {
                                     cmp.toggle(true, true);
@@ -181,15 +179,14 @@ gxp.plugins.GoogleEarth = Ext.extend(gxp.plugins.Tool, {
             } else {
                 // hide the panel
                 layout.setActiveItem(0);
-                this.actions[0].items[0].setTooltip(this.tooltip);
             }
         }
     },
 
-    /** api: method[hasValidAPIKey]
-     *  :returns: ``String`` if it has a valid key and undefined if not.
+    /** private: method[getAPIKey]
+     *  :arg callback: ``Function`` To be called with API key.
      */
-    hasValidAPIKey: function() {
+    getAPIKey: function(callback) {
         var key = this.initialConfig.apiKey;
         var keys = this.initialConfig.apiKeys;
         if (!key && keys) {
@@ -209,14 +206,6 @@ gxp.plugins.GoogleEarth = Ext.extend(gxp.plugins.Tool, {
                 }
             }
         }
-        return key;
-    },
-
-    /** private: method[getAPIKey]
-     *  :arg callback: ``Function`` To be called with API key.
-     */
-    getAPIKey: function(callback) {
-        var key = this.hasValidAPIKey();
         if (key) {
             // return then call callback
             window.setTimeout(
@@ -369,18 +358,7 @@ gxp.plugins.GoogleEarth.loader = new (Ext.extend(Ext.util.Observable, {
         });
 
         this.loading = true;
-        
-        // The google loader accesses document.body, so we don't add the loader
-        // script before the document is ready.
-        function append() {
-            document.getElementsByTagName("head")[0].appendChild(script);
-        }
-        if (document.body) {
-            append();
-        } else {
-            Ext.onReady(append);
-        }
-        
+        document.getElementsByTagName("head")[0].appendChild(script);
         this.script = script;
 
     },

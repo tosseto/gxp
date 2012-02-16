@@ -98,12 +98,6 @@ gxp.LayerUploadPanel = Ext.extend(Ext.FormPanel, {
             buttonCfg: {
                 iconCls: "gxp-icon-filebrowse"
             },
-            listeners: {
-                "fileselected": function(cmp, value) {
-                    // remove the path from the filename - avoids C:/fakepath etc.
-                    cmp.setValue(value.split(/[/\\]/).pop());
-                }
-            },
             validator: this.fileNameValidator.createDelegate(this)
         }, {
             xtype: "fieldset",
@@ -209,7 +203,7 @@ gxp.LayerUploadPanel = Ext.extend(Ext.FormPanel, {
                 break;
             }
         }
-        return valid || this.invalidFileExtensionText + '<br/>' + this.validFileExtensions.join(", ");
+        return valid || this.invalidFileExtensionText + this.validFileExtensions.join(", ");
     },
 
     /** private: method[createWorkspacesCombo]

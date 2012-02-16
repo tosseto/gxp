@@ -7,8 +7,7 @@
  */
 
 /**
- * @requires data/WFSProtocolProxy.js
- * @requires GeoExt/data/FeatureStore.js
+ * @include data/WFSProtocolProxy.js
  */
 
 /** api: (define)

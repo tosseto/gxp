@@ -7,15 +7,8 @@
  */
 
 /**
- * @require util.js
- * @require widgets/RulePanel.js
- * @require widgets/StylePropertiesDialog.js
- * @require OpenLayers/Renderer.js
- * @require OpenLayers/Style2.js
- * @require OpenLayers/Format/SLD/v1_0_0.js
- * @require GeoExt/data/AttributeStore.js
- * @require GeoExt/widgets/WMSLegend.js
- * @require GeoExt/widgets/VectorLegend.js
+ * @include widgets/RulePanel.js
+ * @include widgets/StylePropertiesDialog.js
  */
 
 /** api: (define)

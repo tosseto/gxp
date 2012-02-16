@@ -6,10 +6,6 @@
  * of the license.
  */
 
-/**
- * @requires OpenLayers/Filter/Comparison.js
- */
-
 /** api: (define)
  *  module = gxp.form
  *  class = ComparisonComboBox

@@ -6,11 +6,6 @@
  * of the license.
  */
 
-/**
- * @requires GeoExt/widgets/grid/FeatureSelectionModel.js
- * @requires GeoExt/data/FeatureStore.js
- */
-
 /** api: (define)
  *  module = gxp.grid
  *  class = FeatureGrid

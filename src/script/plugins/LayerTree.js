@@ -8,10 +8,6 @@
 
 /**
  * @requires plugins/Tool.js
- * @requires GeoExt/widgets/tree/LayerNode.js
- * @requires GeoExt/widgets/tree/TreeNodeUIEventMixin.js
- * @requires GeoExt/widgets/tree/LayerContainer.js
- * @requires GeoExt/widgets/tree/LayerLoader.js
  */
 
 /** api: (define)
@@ -78,11 +74,6 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
      */
     defaultGroup: "default",
     
-    /** private: config[treeNodeUI]
-     *  ``Ext.tree.TreeNodeUI``
-     */
-    treeNodeUI: null,
-    
     /** private: method[constructor]
      *  :arg config: ``Object``
      */
@@ -97,27 +88,33 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                 }
             };
         }
-        if (!this.treeNodeUI) {
-            this.treeNodeUI = Ext.extend(
-                GeoExt.tree.LayerNodeUI,
-                new GeoExt.tree.TreeNodeUIEventMixin()
-            );
-        }
     },
     
     /** private: method[addOutput]
      *  :arg config: ``Object``
-     *  :returns: ``Ext.Component``
      */
     addOutput: function(config) {
-        config = Ext.apply(this.createOutputConfig(), config || {});
-        return gxp.plugins.LayerTree.superclass.addOutput.call(this, config);
-    },
-    
-    /** private: method[createOutputConfig]
-     *  :returns: ``Object`` Configuration object for an Ext.tree.TreePanel
-     */
-    createOutputConfig: function() {
+
+        var target = this.target, me = this;
+        var addListeners = function(node, record) {
+            if (record) {
+                target.on("layerselectionchange", function(rec) {
+                    if (!me.selectionChanging && rec === record) {
+                        node.select();
+                    }
+                });
+                if (record === target.selectedLayer) {
+                    node.on("rendernode", function() {
+                        node.select();
+                    });
+                }
+            }
+        };
+        
+        // create our own layer node UI class, using the TreeNodeUIEventMixin
+        var LayerNodeUI = Ext.extend(GeoExt.tree.LayerNodeUI,
+            new GeoExt.tree.TreeNodeUIEventMixin());
+        
         var treeRoot = new Ext.tree.TreeNode({
             text: this.rootNodeText,
             expanded: true,
@@ -125,17 +122,15 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
             allowDrop: false
         });
         
-        var defaultGroup = this.defaultGroup,
-            plugin = this,
-            groupConfig;
+        var groupConfig, defaultGroup = this.defaultGroup;
         for (var group in this.groups) {
             groupConfig = typeof this.groups[group] == "string" ?
                 {title: this.groups[group]} : this.groups[group];
-            treeRoot.appendChild(new GeoExt.tree.LayerContainer(Ext.apply({
+            treeRoot.appendChild(new GeoExt.tree.LayerContainer({
                 text: groupConfig.title,
                 iconCls: "gxp-folder",
                 expanded: true,
-                group: group == this.defaultGroup ? undefined : group,
+                group: group == defaultGroup ? undefined : group,
                 loader: new GeoExt.tree.LayerLoader({
                     baseAttrs: groupConfig.exclusive ?
                         {checkedGroup: group} : undefined,
@@ -147,8 +142,25 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                         };
                     })(group),
                     createNode: function(attr) {
-                        plugin.configureLayerNode(this, attr);
-                        return GeoExt.tree.LayerLoader.prototype.createNode.apply(this, arguments);
+                        attr.uiProvider = LayerNodeUI;
+                        var layer = attr.layer;
+                        var store = attr.layerStore;
+                        if (layer && store) {
+                            var record = store.getAt(store.findBy(function(r) {
+                                return r.getLayer() === layer;
+                            }));
+                            if (record) {
+                                if (!record.get("queryable")) {
+                                    attr.iconCls = "gxp-tree-rasterlayer-icon";
+                                }
+                                if (record.get("fixed")) {
+                                    attr.allowDrag = false;
+                                }
+                            }
+                        }
+                        var node = GeoExt.tree.LayerLoader.prototype.createNode.apply(this, arguments);
+                        addListeners(node, record);
+                        return node;
                     }
                 }),
                 singleClickExpand: true,
@@ -158,10 +170,10 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
                         node.expand();
                     }
                 }
-            }, groupConfig)));
+            }));
         }
         
-        return {
+        config = Ext.apply({
             xtype: "treepanel",
             root: treeRoot,
             rootVisible: false,
@@ -169,102 +181,57 @@ gxp.plugins.LayerTree = Ext.extend(gxp.plugins.Tool, {
             enableDD: true,
             selModel: new Ext.tree.DefaultSelectionModel({
                 listeners: {
-                    beforeselect: this.handleBeforeSelect,
+                    beforeselect: function(selModel, node) {
+                        var changed = true;
+                        var layer = node && node.layer;
+                        var record;
+                        if (layer) {
+                            var store = node.layerStore;
+                            record = store.getAt(store.findBy(function(r) {
+                                return r.getLayer() === layer;
+                            }));
+                        }
+                        this.selectionChanging = true;
+                        changed = this.target.selectLayer(record);
+                        this.selectionChanging = false;
+                        return changed;
+                    },
                     scope: this
                 }
             }),
             listeners: {
-                contextmenu: this.handleTreeContextMenu,
-                beforemovenode: this.handleBeforeMoveNode,                
+                contextmenu: function(node, e) {
+                    if(node && node.layer) {
+                        node.select();
+                        var tree = node.getOwnerTree();
+                        if (tree.getSelectionModel().getSelectedNode() === node) {
+                            var c = tree.contextMenu;
+                            c.contextNode = node;
+                            c.items.getCount() > 0 && c.showAt(e.getXY());
+                        }
+                    }
+                },
+                beforemovenode: function(tree, node, oldParent, newParent, i) {
+                    // change the group when moving to a new container
+                    if(oldParent !== newParent) {
+                        var store = newParent.loader.store;
+                        var index = store.findBy(function(r) {
+                            return r.getLayer() === node.layer;
+                        });
+                        var record = store.getAt(index);
+                        record.set("group", newParent.attributes.group);
+                    }
+                },                
                 scope: this
             },
             contextMenu: new Ext.menu.Menu({
                 items: []
             })
-        };
-    },
-    
-    /** private: method[configureLayerNode]
-     *  :arg loader: ``GeoExt.tree.LayerLoader``
-     *  :arg node: ``Object`` The node
-     */
-    configureLayerNode: function(loader, attr) {
-        attr.uiProvider = this.treeNodeUI;
-        var layer = attr.layer;
-        var store = attr.layerStore;
-        if (layer && store) {
-            var record = store.getAt(store.findBy(function(r) {
-                return r.getLayer() === layer;
-            }));
-            if (record) {
-                attr.qtip = record.get('name');
-                if (!record.get("queryable")) {
-                    attr.iconCls = "gxp-tree-rasterlayer-icon";
-                }
-                if (record.get("fixed")) {
-                    attr.allowDrag = false;
-                }
-                attr.listeners = {
-                    rendernode: function(node) {
-                        if (record === this.target.selectedLayer) {
-                            node.select();
-                        }
-                        this.target.on("layerselectionchange", function(rec) {
-                            if (!this.selectionChanging && rec === record) {
-                                node.select();
-                            }
-                        }, this);
-                    },
-                    scope: this
-                };
-            }
-        }
-    },
-    
-    /** private: method[handleBeforeSelect]
-     */
-    handleBeforeSelect: function(selModel, node) {
-         var changed = true;
-         var layer = node && node.layer;
-         var record;
-         if (layer) {
-             var store = node.layerStore;
-             record = store.getAt(store.findBy(function(r) {
-                 return r.getLayer() === layer;
-             }));
-         }
-         this.selectionChanging = true;
-         changed = this.target.selectLayer(record);
-         this.selectionChanging = false;
-         return changed;
-     },
-     
-    /** private: method[handleTreeContextMenu]
-     */
-    handleTreeContextMenu: function(node, e) {
-        if(node && node.layer) {
-            node.select();
-            var tree = node.getOwnerTree();
-            if (tree.getSelectionModel().getSelectedNode() === node) {
-                var c = tree.contextMenu;
-                c.contextNode = node;
-                c.items.getCount() > 0 && c.showAt(e.getXY());
-            }
-        }
-    },
-    
-    /** private: method[handleBeforeMoveNode]
-     */
-    handleBeforeMoveNode: function(tree, node, oldParent, newParent, i) {
-        // change the group when moving to a new container
-        if(oldParent !== newParent) {
-            var store = newParent.loader.store;
-            var index = store.findBy(function(r) {
-                return r.getLayer() === node.layer;
-            });
-            var record = store.getAt(index);
-            record.set("group", newParent.attributes.group);
-        }
+        }, config || {});
+        
+        var layerTree = gxp.plugins.LayerTree.superclass.addOutput.call(this, config);
+        
+        return layerTree;
     }
         
 });

@@ -39,12 +39,6 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      */
     addActionMenuText: "Add layers",
 
-    /** api: config[findActionMenuText]
-     *  ``String``
-     *  Text for find menu item (i18n).
-     */
-    findActionMenuText: "Find layers",
-
     /** api: config[addActionTip]
      *  ``String``
      *  Text for add action tooltip (i18n).
@@ -116,13 +110,6 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      */
     doneText: "Done",
 
-    /** api: config[search]
-     *  ``Object | Boolean``
-     *  If provided, a :class:`gxp.CatalogueSearchPanel` will be added as a
-     *  menu option. This panel will be constructed using the provided config.
-     *  By default, no search functionality is provided.
-     */
-
     /** api: config[upload]
      *  ``Object | Boolean``
      *  If provided, a :class:`gxp.LayerUploadPanel` will be made accessible
@@ -184,76 +171,19 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
     /** api: method[addActions]
      */
     addActions: function() {
-        var commonOptions = {
+        var selectedLayer;
+        var actions = gxp.plugins.AddLayers.superclass.addActions.apply(this, [{
             tooltip : this.addActionTip,
             text: this.addActionText,
             menuText: this.addActionMenuText,
             disabled: true,
-            iconCls: "gxp-icon-addlayers"
-        };
-        var options;
-        if (this.initialConfig.search) {
-            options = Ext.apply(commonOptions, {
-                menu: new Ext.menu.Menu({
-                    items: [
-                        new Ext.menu.Item({
-                            iconCls: 'gxp-icon-addlayers', 
-                            text: this.addActionMenuText, 
-                            handler: this.showCapabilitiesGrid, 
-                            scope: this
-                        }),
-                        new Ext.menu.Item({
-                            iconCls: 'gxp-icon-addlayers', 
-                            text: this.findActionMenuText,
-                            handler: this.showCatalogueSearch,
-                            scope: this
-                        })
-                    ]
-                })
-            });
-        } else {
-            options = Ext.apply(commonOptions, {
-                handler : this.showCapabilitiesGrid,
-                scope: this
-            });
-        }
-        var actions = gxp.plugins.AddLayers.superclass.addActions.apply(this, [options]);
+            iconCls: "gxp-icon-addlayers",
+            handler : this.showCapabilitiesGrid,
+            scope: this
+        }]);
 
         this.target.on("ready", function() {actions[0].enable();});
         return actions;
-    },
-
-    /** api: method[showCatalogueSearch]
-     * Shows the window with a search panel.
-     */
-    showCatalogueSearch: function() {
-        var selectedSource = this.initialConfig.search.selectedSource;
-        var sources = {};
-        for (var key in this.target.layerSources) {
-            var source = this.target.layerSources[key];
-            if (source instanceof gxp.plugins.CatalogueSource) {
-                var obj = {};
-                obj[key] = source;
-                Ext.apply(sources, obj);
-            }
-        }
-        var output = gxp.plugins.AddLayers.superclass.addOutput.apply(this, [{
-            sources: sources,
-            selectedSource: selectedSource,
-            xtype: 'gxp_cataloguesearchpanel',
-            map: this.target.mapPanel.map,
-            listeners: {
-                'addlayer': function(cmp, sourceKey, layerConfig) {
-                    var source = this.target.layerSources[sourceKey];
-                    var record = source.createLayerRecord(layerConfig);
-                    this.target.mapPanel.layers.add(record);
-                },
-                scope: this
-            }
-        }]);
-        var popup = output.findParentByType('window');
-        popup && popup.center();
-        return output;
     },
 
     /** api: method[showCapabilitiesGrid]
@@ -271,21 +201,21 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      * Constructs a window with a capabilities grid.
      */
     initCapGrid: function() {
-        var source, data = [], target = this.target;        
-        for (var id in target.layerSources) {
-            source = target.layerSources[id];
-            if (source.store && source.ptype !== "gxp_cataloguesource") {
-                data.push([id, source.title || id, source.url]);
+        var source, data = [];
+        for (var id in this.target.layerSources) {
+            source = this.target.layerSources[id];
+            if (source.store) {
+                data.push([id, source.title || id]);
             }
         }
         var sources = new Ext.data.ArrayStore({
-            fields: ["id", "title", "url"],
+            fields: ["id", "title"],
             data: data
         });
 
         var expander = this.createExpander();
 
-        function addLayers() {
+        var addLayers = function() {
             var key = sourceComboBox.getValue();
             var layerStore = this.target.mapPanel.layers;
             var source = this.target.layerSources[key];
@@ -304,23 +234,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                     }
                 }
             }
-        }
-        
-        function updateName() {
-            var store = sourceComboBox.store,
-                valueField = sourceComboBox.valueField,
-                index = store.findExact(valueField, sourceComboBox.getValue()),
-                rec = store.getAt(index),
-                source = target.layerSources[rec.get("id")];
-            if (source) {
-                if (source.title !== rec.get("title")) {
-                    rec.set("title", source.title);
-                    sourceComboBox.setValue(rec.get(valueField));
-                }
-            } else {
-                store.remove(rec);
-            }
-        }        
+        };
 
         var idx = 0;
         if (this.startSourceId !== null) {
@@ -331,11 +245,10 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             }, this);
         }
 
-        var source = this.target.layerSources[data[idx][0]],
-            store = source.store;
-        if (source.lazy) {
+        var store = this.target.layerSources[data[idx][0]].store;
+        if (store.getCount() === 0) {
             // assume a lazy source
-            store.load({callback: updateName});
+            store.load();
         }
 
         var capGridPanel = new Ext.grid.GridPanel({
@@ -360,7 +273,6 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             store: sources,
             valueField: "id",
             displayField: "title",
-            tpl: '<tpl for="."><div ext:qtip="{url}" class="x-combo-list-item">{title}</div></tpl>',
             triggerAction: "all",
             editable: false,
             allowBlank: false,
@@ -374,8 +286,9 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                     // TODO: remove the following when this Ext issue is addressed
                     // http://www.extjs.com/forum/showthread.php?100345-GridPanel-reconfigure-should-refocus-view-to-correct-scroller-height&p=471843
                     capGridPanel.getView().focusRow(0);
-                    if (source.lazy) {
-                        source.store.load({callback: updateName});
+                    if (source.store.getCount() === 0) {
+                        // assume a lazy source
+                        source.store.load();
                     }
                     this.setSelectedSource(source);
                 },
@@ -489,11 +402,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                     capGridPanel.getSelectionModel().clearSelections();
                 },
                 show: function(win) {
-                    if (this.selectedSource === null) {
-                        this.setSelectedSource(this.target.layerSources[data[idx][0]]);
-                    } else {
-                        this.setSelectedSource(this.selectedSource);
-                    }
+                    this.setSelectedSource(this.target.layerSources[data[idx][0]]);
                 },
                 scope: this
             }

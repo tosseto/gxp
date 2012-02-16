@@ -9,12 +9,6 @@
 /**
  * @requires plugins/Tool.js
  * @requires data/WFSFeatureStore.js
- * @requires OpenLayers/StyleMap.js
- * @requires OpenLayers/Rule.js
- * @requires OpenLayers/Layer/Vector.js
- * @requires OpenLayers/Renderer/SVG.js
- * @requires OpenLayers/Renderer/VML.js
- * @requires OpenLayers/Renderer/Canvas.js
  */
 
 /** api: (define)
@@ -414,8 +408,7 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
                 this.target.on("beforelayerselectionchange", this.setLayer, this);
             }
             if (this.layer) {
-                var config = Ext.apply({}, this.layer);
-                this.target.createLayerRecord(config, this.setLayer, this);
+                this.target.createLayerRecord(this.layer, this.setLayer, this);
             }
             this.on("layerchange", this.setSchema, this);
             return true;
@@ -464,9 +457,7 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
         var change = this.fireEvent("beforelayerchange", this, layerRecord);
         if (change !== false) {
             if (layerRecord) {
-                // do not use getProjection here since we never want to use the 
-                // map's projection on the feature layer
-                this.featureLayer.projection = layerRecord.getLayer().projection;
+                this.featureLayer.projection = this.getProjection(layerRecord);
             }
             if (layerRecord !== this.layerRecord) {
                 this.clearFeatureStore();
@@ -646,16 +637,16 @@ gxp.plugins.FeatureManager = Ext.extend(gxp.plugins.Tool, {
      *  :returns: ``OpenLayers.Projection``
      *
      *  Gets the appropriate projection to use for feature requests.
-     *  Use layer projection if it equals the map projection, and use the 
-     *  map projection otherwise.
      */
     getProjection: function(record) {
+        // TODO: This method is suspect.  Determine what it should be doing
+        // and create tests to ensure it is doing the right thing.
         var projection = this.target.mapPanel.map.getProjectionObject();
         var layerProj = record.getLayer().projection;
         if (layerProj && layerProj.equals(projection)) {
             projection = layerProj;
         }
-        return projection;
+        return layerProj;
     },
     
     /** private: method[setFeatureStore]

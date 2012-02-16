@@ -8,7 +8,6 @@
 
 /**
  * @requires plugins/LayerSource.js
- * @requires OpenLayers/Layer/Google/v3.js
  */
 
 /** api: (define)
@@ -337,17 +336,7 @@ gxp.plugins.GoogleSource.loader = new (Ext.extend(Ext.util.Observable, {
         });
 
         this.loading = true;
-
-        // The google loader accesses document.body, so we don't add the loader
-        // script before the document is ready.
-        function append() {
-            document.getElementsByTagName("head")[0].appendChild(script);
-        }
-        if (document.body) {
-            append();
-        } else {
-            Ext.onReady(append);
-        }
+        document.getElementsByTagName("head")[0].appendChild(script);
 
     }
 

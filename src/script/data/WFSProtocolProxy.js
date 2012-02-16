@@ -6,10 +6,6 @@
  * of the license.
  */
 
-/**
- * @requires GeoExt/data/ProtocolProxy.js
- */
-
 /** api: (define)
  *  module = gxp.data
  *  class = WFSProtocolProxy

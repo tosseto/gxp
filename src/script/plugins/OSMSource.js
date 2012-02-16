@@ -8,7 +8,6 @@
 
 /**
  * @requires plugins/LayerSource.js
- * @requires OpenLayers/Layer/OSM.js
  */
 
 /** api: (define)
@@ -92,8 +91,7 @@ gxp.plugins.OSMSource = Ext.extend(gxp.plugins.LayerSource, {
             maxResolution: 156543.03390625,
             numZoomLevels: 19,
             units: "m",
-            buffer: 1,
-            transitionEffect: "resize"
+            buffer: 1
         };
         
         var layers = [

@@ -33,14 +33,13 @@ Ext.namespace("gxp.plugins");
   *  .. code-block:: javascript
   *
   *    tools: [{
-  *        ptype: "gxp_selectedfeatureactions",
+  *        ptype: "gxp_selectedFeatureActions",
   *        featureManager: "myfeaturemanager",
   *        actionTarget: "featuregrid.contextMenu",
   *        actions: [{
   *            menuText: "Search for title",
   *            urlTemplate: "http://google.com/search?q={title}",
   *            iconCls: "google-icon"
-  *        }]
   *        }
   *        //...
   *    ]
