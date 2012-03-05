@@ -255,12 +255,13 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
     createStore: function() {
         var baseParams = this.baseParams || {
             SERVICE: "WMS",
-            REQUEST: "GetCapabilities"
+            REQUEST: "GetCapabilities",
+            VERSION: "1.1.1",
+            RANDOMIZE:  + "rnd" + Math.floor(Math.random()*10001) //Prevent IE from caching results
         };
         if (this.version) {
             baseParams.VERSION = this.version;
         }
-
         var lazy = this.isLazy();
 
         this.store = new GeoExt.data.WMSCapabilitiesStore({
@@ -441,7 +442,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
             original = this.store.getAt(index);
         } else if (Ext.isObject(config.capability)) {
             original = this.store.reader.readRecords({capability: {
-                request: {getmap: {href: this.url}},
+                request: {getmap: {href: this.store.url}},
                 layers: [config.capability]}
             }).records[0];
         } else if (this.layerConfigComplete(config)) {

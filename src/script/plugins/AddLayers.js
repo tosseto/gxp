@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
  *
- * 
+ *
  * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -139,7 +139,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 
     /** api: config[nonUploadSources]
      *  ``Array``
-     *  If ``upload`` is enabled, the upload button will not be displayed for 
+     *  If ``upload`` is enabled, the upload button will not be displayed for
      *  sources whose identifiers or URLs are in the provided array.  By
      *  default, the upload button will make an effort to be shown for all
      *  sources with a url property.
@@ -197,13 +197,13 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 menu: new Ext.menu.Menu({
                     items: [
                         new Ext.menu.Item({
-                            iconCls: 'gxp-icon-addlayers', 
-                            text: this.addActionMenuText, 
-                            handler: this.showCapabilitiesGrid, 
+                            iconCls: 'gxp-icon-addlayers',
+                            text: this.addActionMenuText,
+                            handler: this.showCapabilitiesGrid,
                             scope: this
                         }),
                         new Ext.menu.Item({
-                            iconCls: 'gxp-icon-addlayers', 
+                            iconCls: 'gxp-icon-addlayers',
                             text: this.findActionMenuText,
                             handler: this.showCatalogueSearch,
                             scope: this
@@ -256,7 +256,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         popup && popup.center();
         return output;
     },
-        
+
 
     /** api: method[showCapabilitiesGrid]
      * Shows the window with a capabilities grid.
@@ -274,7 +274,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      */
     initCapGrid: function() {
 
-        var source, data = [], target = this.target;        
+        var source, data = [], target = this.target;
         for (var id in target.layerSources) {
             source = target.layerSources[id];
             if (source.store && source.ptype !== "gxp_cataloguesource") {
@@ -288,7 +288,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 
         var expander = this.createExpander();
 
-        
+
         function addLayers() {
             var key = sourceComboBox.getValue();
             var layerStore = this.target.mapPanel.layers;
@@ -309,7 +309,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 }
             }
         }
-        
+
         function updateName() {
             var store = sourceComboBox.store,
                 valueField = sourceComboBox.valueField,
@@ -324,7 +324,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             } else {
                 store.remove(rec);
             }
-        }        
+        }
 
         var idx = 0;
         if (this.startSourceId !== null) {
@@ -514,7 +514,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         this.fireEvent("sourceselected", this, source);
     },
 
-    
+
     /** api: method[createUploadButton]
      *  If this tool is provided an ``upload`` property, a button will be created
      *  that launches a window with a :class:`gxp.LayerUploadPanel`.
@@ -651,9 +651,9 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
     isEligibleForUpload: function(source) {
         return (
             source.url &&
-            (this.relativeUploadOnly ? (source.url.charAt(0) === "/") : true) &&
-            (this.nonUploadSources || []).indexOf(source.id) === -1
-        );
+                (this.relativeUploadOnly ? (source.url.charAt(0) === "/") : true) &&
+                (this.nonUploadSources || []).indexOf(source.id) === -1
+            );
     },
 
     /** api: config[createExpander]
