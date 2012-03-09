@@ -255,7 +255,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
     createStore: function() {
         var baseParams = this.baseParams || {
             SERVICE: "WMS",
-            REQUEST: "GetCapabilities",
+            REQUEST: "GetCapabilities"
         };
         if (this.version) {
             baseParams.VERSION = this.version;
