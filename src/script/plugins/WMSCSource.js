@@ -172,15 +172,16 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
                     }
                 }
             }
-        }
-        if (!config.capability.tileSets) {
-            var tileSize = layer.options.tileSize;
-            if (tileSize) {
-                config.tileSize = [tileSize.w, tileSize.h];
-                config.tileOrigin = layer.options.tileOrigin;
-                config.resolutions = layer.options.resolutions;
+            if (!config.capability.tileSets) {
+                var tileSize = layer.options.tileSize;
+                if (tileSize) {
+                    config.tileSize = [tileSize.w, tileSize.h];
+                    config.tileOrigin = layer.options.tileOrigin;
+                    config.resolutions = layer.options.resolutions;
+                }
             }
         }
+
         return Ext.applyIf(config, {
             // the "tiled" property is already used to indicate singleTile
             // the "cached" property will indicate whether to send the TILED param

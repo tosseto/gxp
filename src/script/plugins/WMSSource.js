@@ -344,7 +344,7 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                 callback: function(options, success, response) {
                     var status = response.status;
                     // responseText should not be empty (OGCException)
-                    if (status >= 200 && status < 403 && response.responseText) {
+                    if (status >= 200 && status < 500 && response.responseText) {
                         this.ready = true;
                         this.fireEvent("ready", this);
                     } else {
