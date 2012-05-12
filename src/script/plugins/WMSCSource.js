@@ -172,7 +172,7 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
                     }
                 }
             }
-            if (!config.capability||!config.capability.tileSets) {
+            if (!config.capability||(config.capability && !config.capability.tileSets)) {
                 var tileSize = layer.options.tileSize;
                 if (tileSize) {
                     config.tileSize = [tileSize.w, tileSize.h];

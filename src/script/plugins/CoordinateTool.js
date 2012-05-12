@@ -15,6 +15,35 @@
  *  plugins/Tool.js
  */
 Ext.namespace("gxp");
+
+/*
+ Create an OpenLayers control to handle right-clicks
+ */
+OpenLayers.Control.RightClick = OpenLayers.Class(OpenLayers.Control, {
+
+    defaultHandlerOptions: {
+        'single': true,
+        'double': true,
+        'pixelTolerance': 0,
+        'stopSingle': false,
+        'stopDouble': false
+    },
+    handleRightClicks:true,
+    initialize: function(options) {
+        this.handlerOptions = OpenLayers.Util.extend(
+            {}, this.defaultHandlerOptions
+        );
+        OpenLayers.Control.prototype.initialize.apply(
+            this, arguments
+        );
+        this.handler = new OpenLayers.Handler.Click(
+            this, this.eventMethods, this.handlerOptions
+        );
+    },
+    CLASS_NAME: "OpenLayers.Control.RightClick"
+
+});
+
 /** api: constructor
  *  .. class:: GeoNodeQueryTool(config)
  *
@@ -61,11 +90,12 @@ gxp.plugins.CoordinateTool = Ext.extend(gxp.plugins.Tool, {
 
 
     showCoordinates: function(e) {
-            var lonlat = this.target.mapPanel.map.getLonLatFromViewPortPx(e.xy);
-            this.createMarker(lonlat);
-            lonlat.transform(this.target.mapPanel.map.projection, "EPSG:4326");
-            this.coordDialog.setCoordinates(lonlat.lon + ',' + lonlat.lat);
-            this.coordWindow.show();
+        this.target.mapPanel.map.addLayer(this.markers);
+        var lonlat = this.target.mapPanel.map.getLonLatFromViewPortPx(e.xy);
+        this.createMarker(lonlat);
+        lonlat.transform(this.target.mapPanel.map.projection, "EPSG:4326");
+        this.coordDialog.setCoordinates(lonlat.lon + ',' + lonlat.lat);
+        this.coordWindow.show();
 
     },
 
@@ -73,43 +103,38 @@ gxp.plugins.CoordinateTool = Ext.extend(gxp.plugins.Tool, {
      */
     addActions: function() {
 
+        var tool = this;
+
         this.coordWindow = new Ext.Window({
             title: this.title,
             layout: "fit",
             width: 300,
             autoHeight: true,
             closeAction: "hide",
+            listeners: {
+                hide:  function() {tool.target.mapPanel.map.removeLayer(tool.markers);}
+            },
             items: [ this.coordDialog ]
         });
 
-        var tool = this;
 
-        var actions = gxp.plugins.CoordinateTool.superclass.addActions.call(this, [
-            {
-                tooltip: this.infoActionTip,
-                iconCls: this.iconCls,
-                id: this.id,
-                text: this.toolText,
-                toggleGroup: this.toggleGroup,
-                enableToggle: true,
-                pressed: false,
-                allowDepress: true,
-                toggleHandler: function(button, pressed) {
-                        if (pressed) {
-                            tool.target.mapPanel.map.addLayer(tool.markers);
-                            tool.target.mapPanel.map.events.register("click", tool, tool.showCoordinates);
 
-                        } else {
-                            tool.markers.clearMarkers();
-                            tool.target.mapPanel.map.removeLayer(tool.markers);
-                            tool.coordWindow.hide();
-                            tool.target.mapPanel.map.events.unregister("click", tool, tool.showCoordinates);
-                    }
-                }
+        // Add an instance of the Click control that listens to rightclick events:
+        var oClick = new OpenLayers.Control.RightClick({eventMethods:{
+            'rightclick': function(e) {
+                tool.showCoordinates(e);
             }
-        ]);
+        }});
 
-        return actions;
+        this.target.mapPanel.map.addControl(oClick);
+        oClick.activate();
+
+        this.target.mapPanel.getEl().on('contextmenu', function(e) {
+            e.preventDefault();
+        })
+
+
+        return;
     }
 
 

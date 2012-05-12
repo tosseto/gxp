@@ -335,27 +335,32 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
         });
         if (lazy) {
             this.lazy = true;
+            //Just assume it's available, run into problems otherwise with ancient WMS's
+            // like http://cga-5.hmdc.harvard.edu/tilecache/tiles.py/1.0.0/
+            this.ready = true;
+            this.fireEvent("ready", this);
+
             // ping server of lazy source with an incomplete request, to see if
             // it is available
-            Ext.Ajax.request({
-                method: "GET",
-                url: this.url,
-                params: {SERVICE: "WMS"},
-                callback: function(options, success, response) {
-                    var status = response.status;
-                    // responseText should not be empty (OGCException)
-                    if (status >= 200 && status < 500 && response.responseText) {
-                        this.ready = true;
-                        this.fireEvent("ready", this);
-                    } else {
-                        this.fireEvent("failure", this,
-                            "Layer source not available.",
-                            "Unable to contact WMS service."
-                        );
-                    }
-                },
-                scope: this
-            });
+//            Ext.Ajax.request({
+//                method: "GET",
+//                url: this.url,
+//                params: {SERVICE: "WMS"},
+//                callback: function(options, success, response) {
+//                    var status = response.status;
+//                    // responseText should not be empty (OGCException)
+//                    if (status >= 200 && status < 500 && response.responseText) {
+//                        this.ready = true;
+//                        this.fireEvent("ready", this);
+//                    } else {
+//                        this.fireEvent("failure", this,
+//                            "Layer source not available.",
+//                            "Unable to contact WMS service."
+//                        );
+//                    }
+//                },
+//                scope: this
+//            });
         }
     },
 
@@ -417,7 +422,8 @@ gxp.plugins.WMSSource = Ext.extend(gxp.plugins.LayerSource, {
                 projection: srs
             }
         ));
-        record.json = config;
+        if (record)
+            record.json = config;
         return record;
     },
 
