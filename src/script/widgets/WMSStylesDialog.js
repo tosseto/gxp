@@ -768,9 +768,8 @@ gxp.WMSStylesDialog = Ext.extend(Ext.Container, {
 //            this.addRulesFieldSet();
 //        rulesFieldSet.add(this.createLegendImage());
         this.doLayout();
-        // disable rules toolbar
-        this.items.get(3).hide();
-        this.stylesStoreReady();
+//        this.items.get(3).hide();
+//        this.stylesStoreReady();
     },
 
     /** private: method[stylesStoreReady]
