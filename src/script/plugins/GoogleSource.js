@@ -99,6 +99,8 @@ gxp.plugins.GoogleSource = Ext.extend(gxp.plugins.LayerSource, {
      */
     terrainAbstract: "Show street map with terrain",
 
+    otherParams: "sensor=false",
+
     constructor: function(config) {
         this.config = config;
         gxp.plugins.GoogleSource.superclass.constructor.apply(this, arguments);
@@ -110,6 +112,7 @@ gxp.plugins.GoogleSource = Ext.extend(gxp.plugins.LayerSource, {
      */
     createStore: function() {
         gxp.plugins.GoogleSource.loader.onLoad({
+            otherParams: this.otherParams,
             timeout: this.timeout,
             callback: this.syncCreateStore,
             errback: function() {
@@ -304,16 +307,18 @@ gxp.plugins.GoogleSource.loader = new (Ext.extend(Ext.util.Observable, {
             autoload: Ext.encode({
                 modules: [{
                     name: "maps",
-                    version: 3.3,
+                    version: 3.7,
                     nocss: "true",
                     callback: "gxp.plugins.GoogleSource.loader.onScriptLoad",
-                    other_params: "sensor=false"
+                    other_params: options.otherParams
                 }]
             })
         };
 
         var script = document.createElement("script");
+        alert(script.src + params);
         script.src = "http://www.google.com/jsapi?" + Ext.urlEncode(params);
+        alert(script.src + params);
 
         // cancel loading if monitor is not ready within timeout
         var errback = options.errback || Ext.emptyFn;
