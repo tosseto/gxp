@@ -316,9 +316,7 @@ gxp.plugins.GoogleSource.loader = new (Ext.extend(Ext.util.Observable, {
         };
 
         var script = document.createElement("script");
-        alert(script.src + params);
         script.src = "http://www.google.com/jsapi?" + Ext.urlEncode(params);
-        alert(script.src + params);
 
         // cancel loading if monitor is not ready within timeout
         var errback = options.errback || Ext.emptyFn;
