@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -38,18 +38,18 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
      *  Text for add server button (i18n).
      */
     addServerText: "Add Server",
-     /** api: config[wmsText]
+    /** api: config[wmsText]
      *  ``String``
      *  Text for WMS radio-button(i18n).
      */
     addWMSText: "WMS",
 
-     /** api: config[arcText]
+    /** api: config[arcText]
      *  ``String``
      *  Text for ArcGIS REST radio-button(i18n).
      */
     addArcText: "ArcGIS REST",
-    
+
     /** api: config[invalidURLText]
      *  ``String``
      *  Message to display when an invalid URL is entered (i18n).
@@ -89,7 +89,7 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
      */
     initComponent: function() {
 
-        this.addEvents("server-added");
+        this.addEvents(["server-added","rssdialog"]);
 
         this.urlTextField = new Ext.form.TextField({
             fieldLabel: "URL",
@@ -99,13 +99,25 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
             validator: this.urlValidator.createDelegate(this)
         });
 
+
         this.sourceTypeRadioList = new Ext.form.RadioGroup({
-                fieldLabel: 'Type',
-                columns: [50, 190],
-                items: [
-                    {name: 'source_type', inputValue: 'gxp_wmscsource', boxLabel: this.addWMSText, checked: true},
-                    {name: 'source_type', inputValue: 'gxp_arcrestsource', boxLabel: this.addArcText}
-                ]
+            fieldLabel: 'Type',
+            columns: [50, 190, 100],
+            items: [
+                {name: 'source_type', inputValue: 'gxp_wmscsource', boxLabel: this.addWMSText, checked: true},
+                {name: 'source_type', inputValue: 'gxp_arcrestsource', boxLabel: this.addArcText},
+                {name: 'source_type',
+                    inputValue: 'gx_feedsource',
+                    boxLabel: "GeoRSS"
+                }
+            ],
+            listeners: {
+                'change': function(radiogroup, radio) {
+                    if (radio && radio.inputValue == "gx_feedsource") {
+                        this.fireEvent("rssdialog");
+                    }
+                }, scope: this
+            }, scope: this
         });
 
         this.form = new Ext.form.FormPanel({
@@ -113,7 +125,7 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
                 this.urlTextField,
                 this.sourceTypeRadioList
             ],
-            border: false,
+            border: true,
             labelWidth: 30,
             bodyStyle: "padding: 5px",
             autoWidth: true,
@@ -172,6 +184,8 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
             // this.explorer.addSource(url, sourceType, null, success, failure, this);
             this.addSource(url, sourceType, success, failure, this);
         }, this);
+
+
 
     },
 
