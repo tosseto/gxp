@@ -6,6 +6,10 @@
  * of the license.
  */
 
+/**
+ * @requires GeoExt/widgets/Action.js
+ */
+
 /** api: (define)
  *  module = gxp.plugins
  *  class = Tool
@@ -112,7 +116,8 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
      *  ``String`` Where to add the tool's output container? This can be any
      *  string that references an ``Ext.Container`` property on the portal, or
      *  "map" to access the viewer's main map. If not provided, a window will
-     *  be created.
+     *  be created. To reference one of the toolbars of an ``Ext.Panel``,
+     *  ".tbar", ".bbar" or ".fbar" has to be appended.
      */
      
     /** api: config[outputConfig]
@@ -210,6 +215,43 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
         }
     },
     
+    /** private: method[getContainer]
+     *  :arg target: ``String`` A reference as described for :obj:`actionTarget`
+     *      and :obj:`outputTarget`
+     *  :returns: ``Ext.Component`` The container reference matching the target.
+     */
+    getContainer: function(target) {
+        var ct, item, meth,
+            parts = target.split("."),
+            ref = parts[0];
+        if (ref) {
+            if (ref == "map") {
+                ct = this.target.mapPanel;
+            } else {
+                ct = Ext.getCmp(ref) || this.target.portal[ref];
+                if (!ct) {
+                    throw new Error("Can't find component with id: " + ref);
+                }
+            }
+        } else {
+            ct = this.target.portal;
+        }
+        item = parts.length > 1 && parts[1];
+        if (item) {
+            meth = {
+                "tbar": "getTopToolbar",
+                "bbar": "getBottomToolbar",
+                "fbar": "getFooterToolbar"
+            }[item];
+            if (meth) {
+                ct = ct[meth]();
+            } else {
+                ct = ct[item];
+            }
+        }
+        return ct;
+    },
+    
     /** api: method[addActions]
      *  :arg actions: ``Array`` Optional actions to add. If not provided,
      *      this.actions will be added.
@@ -226,7 +268,7 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
         var actionTargets = this.actionTarget instanceof Array ?
             this.actionTarget : [this.actionTarget];
         var a = actions instanceof Array ? actions : [actions];
-        var action, actionTarget, i, j, jj, parts, ref, item, ct, meth, index = null;
+        var action, actionTarget, i, j, jj, ct, index = null;
         for (i=actionTargets.length-1; i>=0; --i) {
             actionTarget = actionTargets[i];
             if (actionTarget) {
@@ -234,26 +276,7 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
                     index = actionTarget.index;
                     actionTarget = actionTarget.target;
                 }
-                parts = actionTarget.split(".");
-                ref = parts[0];
-                item = parts.length > 1 && parts[1];
-                ct = ref ?
-                    ref == "map" ?
-                        this.target.mapPanel :
-                        (Ext.getCmp(ref) || this.target.portal[ref]) :
-                    this.target.portal;
-                if (item) {
-                    meth = {
-                        "tbar": "getTopToolbar",
-                        "bbar": "getBottomToolbar",
-                        "fbar": "getFooterToolbar"
-                    }[item];
-                    if (meth) {
-                        ct = ct[meth]();
-                    } else {
-                        ct = ct[item];
-                    }
-                }
+                ct = this.getContainer(actionTarget);
             }
             for (j=0, jj=a.length; j<jj; ++j) {
                 if (!(a[j] instanceof Ext.Action || a[j] instanceof Ext.Component)) {
@@ -316,7 +339,10 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
      *  :arg config: ``Object`` configuration for the ``Ext.Component`` to be
      *      added to the ``outputTarget``. Properties of this configuration
      *      will be overridden by the applications ``outputConfig`` for the
-     *      tool instance.
+     *      tool instance. Tool plugins that want to reuse their output (after
+     *      being closed by a window or crumb panel) can also provide an
+     *      ``Ext.Component`` instance here, if it was previously created with
+     *      ``addOutput``.
      *  :return: ``Ext.Component`` The component added to the ``outputTarget``. 
      *
      *  Adds output to the tool's ``outputTarget``. This method is meant to be
@@ -332,12 +358,10 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
         var ref = this.outputTarget;
         var container;
         if (ref) {
-            if (ref === "map") {
-                container = this.target.mapPanel;
-            } else {
-                container = Ext.getCmp(ref) || this.target.portal[ref];
+            container = this.getContainer(ref);
+            if (!(config instanceof Ext.Component)) {
+                Ext.apply(config, this.outputConfig);
             }
-            Ext.apply(config, this.outputConfig);
         } else {
             var outputConfig = this.outputConfig || {};
             container = new Ext.Window(Ext.apply({
@@ -353,14 +377,24 @@ gxp.plugins.Tool = Ext.extend(Ext.util.Observable, {
                 }]
             }, outputConfig)).show().items.get(0);
         }
-        var component = container.add(config);            
-        if (component instanceof Ext.Window) {
-            component.show();
+        if (container) {
+            var component = container.add(config);
+            component.on("removed", function(cmp) {
+                this.output.remove(cmp);
+            }, this, {single: true});
+            if (component instanceof Ext.Window) {
+                component.show();
+            } else {
+                container.doLayout();
+            }
+            this.output.push(component);
+            return component;
         } else {
-            container.doLayout();
+            var ptype = this.ptype;
+            if (window.console) {
+                console.error("Failed to create output for plugin with ptype: " + ptype);
+            }
         }
-        this.output.push(component);
-        return component;
     },
     
     /** api: method[removeOutput]

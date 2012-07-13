@@ -9,6 +9,7 @@
 /**
  * @requires widgets/PlaybackToolbar.js
  * @requires widgets/form/PlaybackModeComboBox.js
+ * @requires OpenLayers/Control/TimeManager.js
  */
 
 /** api: (define)
@@ -59,12 +60,13 @@ gxp.PlaybackOptionsPanel = Ext.extend(Ext.Panel, {
     initComponent: function() {
         var config = Ext.applyIf(this.initialConfig,{
             minHeight:400,
-            minWidth:250,
+            minWidth:275,
             ref:'optionsPanel',
             items:[
             {
                 xtype: 'form',
                 layout: 'form',
+                autoScroll: true,
                 ref:'form',
                 labelWidth:10,
                 defaultType: 'textfield',
@@ -80,6 +82,7 @@ gxp.PlaybackOptionsPanel = Ext.extend(Ext.Panel, {
                         fieldLabel: this.startText,
                         listeners: {
                             'select': this.setStartTime,
+                            'change': this.setStartTime,
                             scope: this
                         },
                         ref: '../../rangeStartField'
@@ -87,6 +90,7 @@ gxp.PlaybackOptionsPanel = Ext.extend(Ext.Panel, {
                         fieldLabel: this.endText,
                         listeners: {
                             'select': this.setEndTime,
+                            'change': this.setEndTime,
                             scope: this
                         },
                         ref: '../../rangeEndField'
@@ -107,8 +111,10 @@ gxp.PlaybackOptionsPanel = Ext.extend(Ext.Panel, {
                     {
                         fieldLabel: this.stepText,
                         xtype: 'numberfield',
+                        anchor:'-25',
+                        enableKeyEvents:true,
                         listeners: {
-                            'select': this.setStep,
+                            'change': this.setStep,
                             scope: this
                         },
                         ref: '../../stepValueField'
@@ -187,9 +193,6 @@ gxp.PlaybackOptionsPanel = Ext.extend(Ext.Panel, {
     },
     setStartTime: function(cmp, date){
         this.timeManager.setStart(date);
-        if(this.timeManager.currentTime<date){
-            this.timeManager.currentTime = date;
-        }
         this.timeManager.fixedRange=true;
     },
     setEndTime:function(cmp,date){
@@ -202,17 +205,30 @@ gxp.PlaybackOptionsPanel = Ext.extend(Ext.Panel, {
         this.timeManager.snapToIntervals = checked;
     },
     setUnits:function(cmp,record,index){
-        this.timeManager.units = record.get('field1'); 
+        var units = record.get('field1');
+        if(this.timeManager.units != units){
+            this.timeManager.units = units;
+            if(this.playbackToolbar.playbackMode != 'track'){
+                this.timeManager.incrementTime();
+            }
+        }
     },
     setStep:function(cmp,newVal,oldVal){
-        this.timeManager.step = newVal;
+        if(cmp.validate() && newVal){
+            this.timeManager.step = newVal;
+            if(this.playbackToolbar.playbackMode == 'ranged' && 
+                this.timeManager.rangeInterval != newVal){
+                    this.timeManager.rangeInterval = newVal;
+                    this.timeManager.incrementTime(newVal);
+            }
+        }
     },
     setPlaybackMode:function(cmp,mode,agents){
         switch(mode){
             case 'cumulative':
                 this.playbackToolbar.setPlaybackMode('cumulative');
                 break;
-            case 'range':
+            case 'ranged':
                 this.disableListMode(true);
                 this.playbackToolbar.setPlaybackMode('ranged');
                 break;
@@ -220,7 +236,7 @@ gxp.PlaybackOptionsPanel = Ext.extend(Ext.Panel, {
                 this.playbackToolbar.setPlaybackMode('track');
                 break;
         }
-        if(mode != 'range'){
+        if(mode != 'ranged'){
             this.disableListMode(false);
         }
     },

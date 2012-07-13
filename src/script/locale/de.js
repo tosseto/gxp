@@ -1,3 +1,6 @@
+/**
+ * @requires GeoExt/Lang.js
+ */
 
 GeoExt.Lang.add("de", {
 
@@ -38,12 +41,11 @@ GeoExt.Lang.add("de", {
         previousPageTip: "vorherige Seite",
         zoomPageExtentTip: "Zoom zur max. Ausdehnung",
         nextPageTip: "nächste Seite",
-        nextPageTip: "letzte Seite",
+        lastPageTip: "letzte Seite",
         totalMsg: "Total: {0} Datensätze"
     },
 
     "gxp.plugins.GoogleEarth.prototype": {
-        apiKeyPrompt: "Bitte geben Sie den Google API Key ein für ",
         menuText: "3D Viewer",
         tooltip: "zum 3D Viewer wechseln"
     },
@@ -62,9 +64,14 @@ GeoExt.Lang.add("de", {
     },
     
     "gxp.plugins.LayerTree.prototype": {
+        shortTitle: "Layer",
         rootNodeText: "Layer",
         overlayNodeText: "überlagernde Layer",
         baseNodeText: "Basiskarten"
+    },
+    
+    "gxp.plugins.LayerManager.prototype": {
+        baseNodeText: "Basiskarte"
     },
 
     "gxp.plugins.Legend.prototype": {
@@ -362,10 +369,10 @@ GeoExt.Lang.add("de", {
         workspaceLabel: "Workspace",
         workspaceEmptyText: "Standard Workspace",
         dataStoreLabel: "Store",
-        dataStoreEmptyText: "Default datastore"
+        dataStoreEmptyText: "Neuen Store erzeugen"
     },
     
-    "gxp.NewSourceWindow.prototype": {
+    "gxp.NewSourceDialog.prototype": {
         title: "neuen Server hinzufügen...",
         cancelText: "Abbrechen",
         addServerText: "Server hinzufügen",

@@ -61,7 +61,7 @@ gxp.plugins.CoordinateTool = Ext.extend(gxp.plugins.Tool, {
      */
     outputTarget: "map",
 
-    title: "Map Coordinates",
+    title: "Map Coordinates (longitude, latitude)",
 
     /** api: config[infoActionTip]
      *  ``String``

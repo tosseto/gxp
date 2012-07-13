@@ -24,13 +24,19 @@ Ext.onReady(function() {
                 xtype: "container",
                 layout: "fit",
                 region: "south",
+                split: true,
+                collapsible: true,
                 height: 150
             }, {
-                // container for the queryform
+                // container for the layer manager etc.
                 id: "west",
-                xtype: "panel",
-                layout: "fit",
                 region: "west",
+                xtype: "gxp_crumbpanel",
+                collapsible: true,
+                collapseMode: "mini",
+                hideCollapseTool: true,
+                split: true,
+                border: true,
                 width: 200
             }],
             bbar: {id: "mybbar"}
@@ -41,14 +47,21 @@ Ext.onReady(function() {
             ptype: "gxp_layermanager",
             outputConfig: {
                 id: "tree",
+                title: "Layers",
                 tbar: []  // we will add buttons to "tree.bbar" later
             },
             outputTarget: "west"
         }, {
             ptype: "gxp_addlayers",
-            actionTarget: "tree.tbar"
+            actionTarget: "tree.tbar",
+            outputTarget: "west",
+            upload: true
         }, {
             ptype: "gxp_removelayer",
+            actionTarget: ["tree.tbar", "tree.contextMenu"]
+        }, {
+            ptype: "gxp_layerproperties",
+            outputTarget: "west",
             actionTarget: ["tree.tbar", "tree.contextMenu"]
         }, {
             ptype: "gxp_zoomtoextent",
@@ -130,6 +143,7 @@ Ext.onReady(function() {
                 source: "local",
                 name: "usa:states",
                 title: "States, USA - Population",
+                queryable: true,
                 selected: true,
                 bbox: [-13884991.404203, 2870341.1822503, -7455066.2973878, 6338219.3590349],
                 tileSize: [256, 256]

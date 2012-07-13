@@ -8,6 +8,8 @@
 
 /**
  * @requires plugins/Tool.js
+ * @requires GeoExt/widgets/LegendPanel.js
+ * @requires GeoExt/widgets/WMSLegend.js
  */
 
 /** api: (define)

@@ -10,6 +10,9 @@
 /**
  * @include widgets/WMSStylesDialog.js
  * @include plugins/GeoServerStyleWriter.js
+ * @include GeoExt/widgets/LayerOpacitySlider.js
+ * @require OpenLayers/Format/CQL.js
+ * @require widgets/FilterBuilder.js
  */
 
 /** api: (define)
@@ -102,27 +105,63 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
     descriptionText: "Description",
     displayText: "Display",
     opacityText: "Opacity",
-    formatText: "Format",
+    formatText: "Tile format",
     infoFormatText: "Info format",
     infoFormatEmptyText: "Select a format",
     transparentText: "Transparent",
-    cacheText: "Cache",
-    cacheFieldText: "Use cached version",
+    cacheText: "Caching",
+    cacheFieldText: "Use cached tiles",
     stylesText: "Styles",
+    displayOptionsText: "Display options",
+    queryText: "Limit with filters",
+    scaleText: "Limit by scale",
+    minScaleText: "Min scale",
+    maxScaleText: "Max scale",
+    switchToFilterBuilderText: "Switch back to filter builder",
+    cqlPrefixText: "or ",
+    cqlText: "use CQL filter instead",
 
     initComponent: function() {
-
-        this.addEvents(
-            /** api: event[change]
-             *  Fires when the ``layerRecord`` is changed using this dialog.
-             */
-            "change"
-        );
-        this.items = [
-            this.createAboutPanel(),
-            this.createDisplayPanel()
-        ];
-
+        this.cqlFormat = new OpenLayers.Format.CQL();
+        if (this.source) {
+            this.source.getSchema(this.layerRecord, function(attributeStore) {
+                if (attributeStore !== false) {
+                    var filter = this.layerRecord.getLayer().params.CQL_FILTER;
+                    this.filterBuilder = new gxp.FilterBuilder({
+                        filter: filter && this.cqlFormat.read(filter),
+                        allowGroups: false,
+                        listeners: {
+                            afterrender: function() {
+                                this.filterBuilder.cascade(function(item) {
+                                    if (item.getXType() === "toolbar") {
+                                        item.addText(this.cqlPrefixText);
+                                        item.addButton({
+                                            text: this.cqlText,
+                                            handler: this.switchToCQL,
+                                            scope: this
+                                        });
+                                    }
+                                }, this);
+                            },
+                            change: function(builder) {
+                                var filter = builder.getFilter();
+                                var cql = null;
+                                if (filter !== false) {
+                                    cql = this.cqlFormat.write(filter);
+                                }
+                                this.layerRecord.getLayer().mergeNewParams({
+                                    CQL_FILTER: cql
+                                });
+                            },
+                            scope: this
+                        },
+                        attributes: attributeStore
+                    });
+                    this.filterFieldset.add(this.filterBuilder);
+                    this.filterFieldset.doLayout();
+                }
+            }, this);
+        }
         // only add the Cache panel if we know for sure the WMS is GeoServer
         // which has been integrated with GWC.
         if (this.layerRecord.get("layer").params.TILED != null) {
@@ -150,33 +189,40 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         gxp.WMSLayerPanel.superclass.initComponent.call(this);
     },
 
-    /** private: createCachePanel
-     *  Creates the Cache panel.
+    /** private: method[switchToCQL]
+     *  Switch from filter builder to CQL.
      */
-    createCachePanel: function() {
-        return {
-            title: this.cacheText,
-            layout: "form",
-            style: "padding: 10px",
-            items: [{
-                xtype: "checkbox",
-                fieldLabel: this.cacheFieldText,
-                checked: (this.layerRecord.get("layer").params.TILED === true),
-                listeners: {
-                    check: function(checkbox, checked) {
-                        var layer = this.layerRecord.get("layer");
-                        layer.mergeNewParams({
-                            TILED: checked
-                        });
-                        this.fireEvent("change");
-                    },
-                    scope: this
-                }
-            }]
-        };
+    switchToCQL: function() {
+        var filter = this.filterBuilder.getFilter();
+        var CQL = "";
+        if (filter !== false) {
+            CQL = this.cqlFormat.write(filter);
+        }
+        this.filterBuilder.hide();
+        this.cqlField.setValue(CQL);
+        this.cqlField.show();
+        this.cqlToolbar.show();
     },
 
-    /** private: createStylesPanel
+    /** private: method[switchToFilterBuilder]
+     *  Switch from CQL field to filter builder.
+     */
+    switchToFilterBuilder: function() {
+        var filter = null;
+        // when parsing fails, we keep the previous filter in the filter builder
+        try {
+            filter = this.cqlFormat.read(this.cqlField.getValue());
+        } catch(e) {
+        }
+        this.cqlField.hide();
+        this.cqlToolbar.hide();
+        this.filterBuilder.show();
+        if (filter !== null) {
+            this.filterBuilder.setFilter(filter);
+        }
+    },
+
+    /** private: method[createStylesPanel]
      *  :arg url: ``String`` url to save styles to
      *
      *  Creates the Styles panel.
@@ -224,8 +270,8 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
             })
         });
     },
-
-    /** private: createAboutPanel
+    
+    /** private: method[createAboutPanel]
      *  Creates the about panel.
      */
     createAboutPanel: function() {
@@ -276,7 +322,42 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         };
     },
 
-    /** private: createDisplayPanel
+    /** private: method[onFormatChange]
+     *  Handler for when the image format is changed.
+     */
+    onFormatChange: function(combo) {
+        var layer = this.layerRecord.getLayer();
+        var format = combo.getValue();
+        layer.mergeNewParams({
+            format: format
+        });
+        var cb = this.transparentCb;
+        if (format == "image/jpeg") {
+            this.transparent = cb.getValue();
+            cb.setValue(false);
+        } else if (this.transparent !== null) {
+            cb.setValue(this.transparent);
+            this.transparent = null;
+        }
+        cb.setDisabled(format == "image/jpeg");
+        this.fireEvent("change");
+    },
+
+    /** private: method[addScaleOptions]
+     *  :arg layer: ``OpenLayers.Layer.WMS``
+     *  :arg options: ``Object``
+     *
+     *  Apply the scale options to the layer and redraw.
+     */
+    addScaleOptions: function(layer, options) {
+        // work around for https://github.com/openlayers/openlayers/issues/407
+        layer.alwaysInRange = null;
+        layer.addOptions(options);
+        layer.display();
+        layer.redraw();
+    },
+    
+    /** private: method[createDisplayPanel]
      *  Creates the display panel.
      */
     createDisplayPanel: function() {
@@ -299,91 +380,209 @@ gxp.WMSLayerPanel = Ext.extend(Ext.TabPanel, {
         var transparent = layer.params["TRANSPARENT"];
         transparent = (transparent === "true" || transparent === true);
 
-        var transCheck = {
-                xtype: "checkbox",
-                fieldLabel: this.transparentText,
-                checked: transparent,
-                listeners: {
-                    check: function(checkbox, checked) {
-                        layer.mergeNewParams({
-                            transparent: checked ? "true" : "false"
-                        });
-                        this.fireEvent("change");
-                    },
-                    scope: this
-                }
-        };
-
-
         return {
             title: this.displayText,
+            layout: 'form',
             style: {"padding": "10px"},
-            layout: "form",
-            labelWidth: 70,
-            items: [{
-                xtype: "slider",
-                name: "opacity",
-                fieldLabel: this.opacityText,
-                value: opacity * 100,
-                //TODO remove the line below when switching to Ext 3.2 final
-                values: [opacity * 100],
-                anchor: "99%",
-                isFormField: true,
-                listeners: {
-                    change: function(slider, value) {
-                        layer.setOpacity(value / 100);
-                        this.fireEvent("change");
-                    },
-                    scope: this
-                }
-            }, {
-                xtype: "combo",
-                fieldLabel: this.formatText,
-                store: formats,
-                value: currentFormat,
-                mode: "local",
-                triggerAction: "all",
-                editable: false,
-                anchor: "99%",
-                listeners: {
-                    select: function(combo) {
-                        var format = combo.getValue();
-                        layer.mergeNewParams({
-                            format: format
-                        });
-                        if (format == "image/jpeg") {
-                            this.transparent = Ext.getCmp('transparent').getValue();
-                            transCheck.setValue(false);
-                        } else if (this.transparent !== null) {
-                            transCheck.setValue(this.transparent);
-                            this.transparent = null;
-                        }
-                        transCheck.setDisabled(format == "image/jpeg");
-                        this.fireEvent("change");
-                    },
-                    scope: this
-                }
-            }, {
-                xtype: "combo",
-                fieldLabel: this.infoFormatText,
-                emptyText: this.infoFormatEmptyText,
-                store: record.get("infoFormats"),
-                value: record.get("infoFormat"),
-                hidden: (record.get("infoFormats") === undefined),
-                mode: 'local',
-                triggerAction: "all",
-                editable: false,
-                anchor: "99%",
-                listeners: {
-                    select: function(combo) {
-                        var infoFormat = combo.getValue();
-                        record.set("infoFormat", infoFormat);
-                        this.fireEvent("change");
-                    }
-                },
-                scope: this
+            defaults: {
+                labelWidth: 70
             },
-            transCheck]
+            items: [{
+                xtype: "fieldset",
+                title: this.displayOptionsText,
+                items: [{
+                    xtype: "gx_opacityslider",
+                    name: "opacity",
+                    anchor: "99%",
+                    isFormField: true,
+                    fieldLabel: this.opacityText,
+                    listeners: {
+                        change: function() {
+                            this.fireEvent("change");
+                        },
+                        scope: this
+                    },
+                    layer: this.layerRecord
+                }, {
+                    xtype: "compositefield",
+                    fieldLabel: this.formatText,
+                    anchor: "99%",
+                    items: [{
+                        xtype: "combo",
+                        width: 90,
+                        listWidth: 150,
+                        store: formats,
+                        value: currentFormat,
+                        mode: "local",
+                        triggerAction: "all",
+                        editable: false,
+                        listeners: {
+                            select: this.onFormatChange,
+                            scope: this
+                        }
+                    }, {
+                        xtype: "checkbox",
+                        ref: '../../../transparentCb',
+                        checked: transparent,
+                        listeners: {
+                            check: function(checkbox, checked) {
+                                layer.mergeNewParams({
+                                    transparent: checked ? "true" : "false"
+                                });
+                                 this.fireEvent("change");
+                            },
+                            scope: this
+                        }
+                    }, {
+                        xtype: "label",
+                        cls: "gxp-layerproperties-label",
+                        text: this.transparentText
+                    }]
+                }, {
+                    xtype: "compositefield",
+                    anchor: "99%",
+                    hidden: this.layerRecord.get("layer").params.TILED == null,
+                    fieldLabel: this.cacheText,
+                    items: [{
+                        xtype: "checkbox",
+                        checked: (this.layerRecord.get("layer").params.TILED === true),
+                        listeners: {
+                            check: function(checkbox, checked) {
+                                var layer = this.layerRecord.get("layer");
+                                layer.mergeNewParams({
+                                    TILED: checked
+                                });
+                                this.fireEvent("change");
+                            },
+                            scope: this
+                        }
+                    }, {
+                        xtype: "label",
+                        cls: "gxp-layerproperties-label",
+                        text: this.cacheFieldText
+                    }]
+                }, {
+                    xtype: "combo",
+                    fieldLabel: this.infoFormatText,
+                    emptyText: this.infoFormatEmptyText,
+                    store: record.get("infoFormats"),
+                    value: record.get("infoFormat"),
+                    hidden: (record.get("infoFormats") === undefined),
+                    mode: 'local',
+                    listWidth: 150,
+                    triggerAction: "all",
+                    editable: false,
+                    anchor: "99%", 
+                    listeners: {
+                        select: function(combo) {
+                            var infoFormat = combo.getValue();
+                            record.set("infoFormat", infoFormat);
+                            this.fireEvent("change");
+                        }
+                    }, 
+                    scope: this
+                }]
+            }, {
+                xtype: "fieldset",
+                title: this.queryText,
+                hideLabels: true,
+                ref: "../filterFieldset",
+                listeners: {
+                    expand: function() {
+                        this.layerRecord.getLayer().mergeNewParams({CQL_FILTER: this.cqlFilter});
+                    },
+                    collapse: function() {
+                        this.cqlFilter = this.layerRecord.getLayer().params.CQL_FILTER;
+                        this.layerRecord.getLayer().mergeNewParams({CQL_FILTER: null});
+                    },
+                    scope: this
+                },
+                hidden: this.source === null,
+                checkboxToggle: true,
+                items: [{
+                    xtype: "textarea",
+                    value: this.layerRecord.getLayer().params.CQL_FILTER,
+                    grow: true,
+                    anchor: '99%',
+                    width: '100%',
+                    growMax: 100,
+                    ref: "../../cqlField",
+                    hidden: true
+                }],
+                buttons: [{
+                    ref: "../../../cqlToolbar",
+                    hidden: true,
+                    text: this.switchToFilterBuilderText,
+                    handler: this.switchToFilterBuilder,
+                    scope: this
+                }]
+            }, {
+                xtype: "fieldset",
+                title: this.scaleText,
+                listeners: {
+                    expand: function() {
+                        var layer = this.layerRecord.getLayer();
+                        if (this.minScale !== undefined || this.maxScale !== undefined) {
+                            this.addScaleOptions(layer, {minScale: this.maxScale, maxScale: this.minScale});
+                        }
+                    },
+                    collapse: function() {
+                        var layer = this.layerRecord.getLayer();
+                        this.minScale = layer.options.maxScale;
+                        this.maxScale = layer.options.minScale;
+                        this.addScaleOptions(layer, {minScale: null, maxScale: null});
+                    },
+                    scope: this
+                },
+                checkboxToggle: true,
+                items: [{
+                    xtype: "compositefield",
+                    fieldLabel: this.minScaleText,
+                    items: [{
+                        xtype: "label",
+                        text: "1:",
+                        cls: "gxp-layerproperties-label"
+                    }, {
+                        xtype: "numberfield",
+                        anchor: '99%',
+                        width: '85%',
+                        listeners: {
+                            'change': function(field) {
+                                var options = {
+                                    maxScale: parseInt(field.getValue())
+                                };
+                                var layer = this.layerRecord.getLayer();
+                                this.addScaleOptions(layer, options);
+                            },
+                            scope: this
+                        },
+                        value: this.layerRecord.getLayer().options.maxScale
+                    }]
+                }, {
+                    xtype: "compositefield",
+                    fieldLabel: this.maxScaleText,
+                    items: [{
+                        xtype: "label",
+                        text: "1:",
+                        cls: "gxp-layerproperties-label"
+                    }, {
+                        xtype: "numberfield",
+                        anchor: '99%',
+                        width: '85%',
+                        listeners: {
+                            'change': function(field) {
+                                var options = {
+                                    minScale: parseInt(field.getValue())
+                                };
+                                var layer = this.layerRecord.getLayer();
+                                this.addScaleOptions(layer, options);
+                            },
+                            scope: this
+                        },
+                        value: this.layerRecord.getLayer().options.minScale
+                    }]
+                }]
+            }]
         };
     }
 

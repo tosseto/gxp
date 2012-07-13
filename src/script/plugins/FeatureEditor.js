@@ -9,6 +9,13 @@
 /**
  * @requires plugins/ClickableFeatures.js
  * @requires widgets/FeatureEditPopup.js
+ * @requires util.js
+ * @requires OpenLayers/Control/DrawFeature.js
+ * @requires OpenLayers/Handler/Point.js
+ * @requires OpenLayers/Handler/Path.js
+ * @requires OpenLayers/Handler/Polygon.js
+ * @requires OpenLayers/Control/SelectFeature.js
+ * @requires GeoExt/widgets/form.js
  */
 
 /** api: (define)
@@ -37,6 +44,12 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      *  iconCls to use for the add button.
      */
     iconClsAdd: "gxp-icon-addfeature",
+
+    /** api: config[closeOnSave]
+     * ``Boolean``
+     * If true, close the popup after saving. Defaults to false.
+     */
+    closeOnSave: false,
 
     /** api: config[supportAbstractGeometry]
      *  Should we support layers that advertize an abstract geometry type?
@@ -131,6 +144,12 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      *  excluded from the property grid of the FeatureEditPopup.
      */
 
+    /** api: config[roles]
+     *  ``Array`` Roles authorized to edit layers. Default is
+     *  ["ROLE_ADMINISTRATOR"]
+     */
+    roles: ["ROLE_ADMINISTRATOR"],
+
     /** private: property[drawControl]
      *  ``OpenLayers.Control.DrawFeature``
      */
@@ -188,14 +207,28 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      */
     init: function(target) {
         gxp.plugins.FeatureEditor.superclass.init.apply(this, arguments);
-        this.target.on("authorizationchange", this.enableOrDisable, this);
+        this.target.on("authorizationchange", this.onAuthorizationChange, this);
     },
 
     /** private: method[destroy]
      */
     destroy: function() {
-        this.target.un("authorizationchange", this.enableOrDisable, this);
+        this.target.un("authorizationchange", this.onAuthorizationChange, this);
         gxp.plugins.FeatureEditor.superclass.destroy.apply(this, arguments);
+    },
+    
+    /** private: method[onAuthorizationChange]
+     */
+    onAuthorizationChange: function() {
+        if (!this.target.isAuthorized(this.roles)) {
+            //TODO if a popup is open, this won't take care of closing it when
+            // a user logs out.
+            this.selectControl.deactivate();
+            this.drawControl.deactivate();
+        }
+        // we don't want to return false here, otherwise we would abort the
+        // event chain.
+        this.enableOrDisable();
     },
 
     /** api: method[addActions]
@@ -265,9 +298,11 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
                         }
                     },
                     activate: function() {
-                        featureManager.showLayer(
-                            this.id, this.showSelectedOnly && "selected"
-                        );
+                        this.target.doAuthorized(this.roles, function() {
+                            featureManager.showLayer(
+                                this.id, this.showSelectedOnly && "selected"
+                            );
+                        }, this);
                     },
                     deactivate: function() {
                         featureManager.hideLayer(this.id);
@@ -293,17 +328,19 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
             },
             eventListeners: {
                 "activate": function() {
-                    if (this.autoLoadFeature === true || featureManager.paging) {
-                        this.target.mapPanel.map.events.register(
-                            "click", this, this.noFeatureClick
+                    this.target.doAuthorized(this.roles, function() {
+                        if (this.autoLoadFeature === true || featureManager.paging) {
+                            this.target.mapPanel.map.events.register(
+                                "click", this, this.noFeatureClick
+                            );
+                        }
+                        featureManager.showLayer(
+                            this.id, this.showSelectedOnly && "selected"
                         );
-                    }
-                    featureManager.showLayer(
-                        this.id, this.showSelectedOnly && "selected"
-                    );
-                    this.selectControl.unselectAll(
-                        popup && popup.editing && {except: popup.feature}
-                    );
+                        this.selectControl.unselectAll(
+                            popup && popup.editing && {except: popup.feature}
+                        );
+                    }, this);
                 },
                 "deactivate": function() {
                     if (this.autoLoadFeature === true || featureManager.paging) {
@@ -340,7 +377,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
                 if (feature) {
                     this.fireEvent("featureeditable", this, feature, false);
                 }
-                if (popup && !popup.hidden) {
+                if (feature && feature.geometry && popup && !popup.hidden) {
                     popup.close();
                 }
             },
@@ -404,8 +441,13 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
                                 featureStore.on({
                                     write: {
                                         fn: function() {
-                                            if (popup && popup.isVisible()) {
-                                                popup.enable();
+                                            if (popup) {
+                                                if (popup.isVisible()) {
+                                                    popup.enable();
+                                                }
+                                                if (this.closeOnSave) {
+                                                    popup.close();
+                                                }
                                             }
                                             var layer = featureManager.layerRecord;
                                             this.target.fireEvent("featureedit", featureManager, {
@@ -661,7 +703,8 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
      * private: method[enableOrDisable]
      */
     enableOrDisable: function() {
-        var disable = !this.schema || !this.target.isAuthorized();
+        // disable editing if no schema
+        var disable = !this.schema;
         this.actions[0].setDisabled(disable);
         this.actions[1].setDisabled(disable);
         return disable;
@@ -676,7 +719,7 @@ gxp.plugins.FeatureEditor = Ext.extend(gxp.plugins.ClickableFeatures, {
         this.schema = schema;
         var disable = this.enableOrDisable();
         if (disable) {
-            // not a wfs capable layer or not authorized
+            // not a wfs capable layer
             this.fireEvent("layereditable", this, layer, false);
             return;
         }

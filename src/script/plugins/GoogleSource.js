@@ -8,6 +8,7 @@
 
 /**
  * @requires plugins/LayerSource.js
+ * @requires OpenLayers/Layer/Google/v3.js
  */
 
 /** api: (define)
@@ -99,6 +100,11 @@ gxp.plugins.GoogleSource = Ext.extend(gxp.plugins.LayerSource, {
      */
     terrainAbstract: "Show street map with terrain",
 
+    /** api: config[otherParams]
+     *  ``String``
+     *  Additional parameters to be sent to Google,
+     *  default is "sensore=false"
+     */
     otherParams: "sensor=false",
 
     constructor: function(config) {

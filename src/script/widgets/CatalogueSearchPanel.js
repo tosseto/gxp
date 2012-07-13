@@ -29,6 +29,12 @@ gxp.CatalogueSearchPanel = Ext.extend(Ext.Panel, {
      */
     border: false,
 
+    /** api: config[maxRecords]
+     *  ``Integer`` The maximum number of records to retrieve in one batch.
+     *  Defaults to 10.
+     */
+    maxRecords: 10,
+
     /** api: config[map]
      *  ``OpenLayers.Map``
      */
@@ -239,7 +245,7 @@ gxp.CatalogueSearchPanel = Ext.extend(Ext.Panel, {
                     limit: 'maxRecords'
                 },
                 store: this.sources[this.selectedSource].store,
-                pageSize: 100 
+                pageSize: this.maxRecords
             }),
             loadMask: true,
             hideHeaders: true,
@@ -300,13 +306,14 @@ gxp.CatalogueSearchPanel = Ext.extend(Ext.Panel, {
         if (searchValue !== "") {
             filter = new OpenLayers.Filter.Comparison({
                 type: OpenLayers.Filter.Comparison.LIKE,
+                matchCase: false,
                 property: 'csw:AnyText',
                 value: '*' + searchValue + '*'
             });
         }
         var data = {
             "resultType": "results",
-            "maxRecords": 100,
+            "maxRecords": this.maxRecords,
             "Query": {
                 "typeNames": "gmd:MD_Metadata",
                 "ElementSetName": {
@@ -406,6 +413,14 @@ gxp.CatalogueSearchPanel = Ext.extend(Ext.Panel, {
     addLayer: function(record) {
         var uri = record.get("URI");
         var bounds = record.get("bounds");
+        var bLeft = bounds.left,
+            bRight = bounds.right,
+            bBottom = bounds.bottom,
+            bTop = bounds.top;
+        var left = Math.min(bLeft, bRight),
+            right = Math.max(bLeft, bRight),
+            bottom = Math.min(bBottom, bTop),
+            top = Math.max(bBottom, bTop);
         var wmsInfo = this.findWMS(uri);
         if (wmsInfo === false) {
             // fallback to dct:references
@@ -415,7 +430,7 @@ gxp.CatalogueSearchPanel = Ext.extend(Ext.Panel, {
         if (wmsInfo !== false) {
             this.fireEvent("addlayer", this, this.selectedSource, Ext.apply({
                 title: record.get('title')[0],
-                bbox: bounds.toArray(),
+                bbox: [left, bottom, right, top],
                 srs: "EPSG:4326"
             }, wmsInfo));
         }

@@ -8,6 +8,7 @@
 
 /**
  * @requires plugins/WMSSource.js
+ * @requires OpenLayers/Format/WMSCapabilities/v1_1_1_WMSC.js
  */
 
 /** api: (define)
@@ -95,7 +96,7 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
         if (!record) {
             return;
         }
-        var caps;
+        var caps, srs;
         if (this.store.reader.raw) {
             caps = this.store.reader.raw.capability;
         }
@@ -109,7 +110,7 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
                 var tileSet = tileSets[i];
                 if (tileSet.layers === layer.params.LAYERS) {
                     var tileProjection;
-                    for (var srs in tileSet.srs) {
+                    for (srs in tileSet.srs) {
                         tileProjection = new OpenLayers.Projection(srs);
                         break;
                     }
@@ -141,7 +142,16 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
                 // because we persist the config from layer.options in
                 // getConfigForRecord, and we don't want to persist a guessed
                 // configuration.
-                layer.tileOrigin = OpenLayers.LonLat.fromArray(this.target.map.maxExtent);
+                var maxExtent;
+                if (this.target.map.maxExtent) {
+                    maxExtent = this.target.map.maxExtent;
+                } else {
+                    srs = config.srs || this.target.map.projection;
+                    maxExtent = OpenLayers.Projection.defaults[srs].maxExtent;
+            }
+                if (maxExtent) {
+                    layer.tileOrigin = OpenLayers.LonLat.fromArray(maxExtent);
+                }
             }
         }
         // unless explicitly configured otherwise, use cached version
@@ -182,6 +192,14 @@ gxp.plugins.WMSCSource = Ext.extend(gxp.plugins.WMSSource, {
             }
         }
 
+        if (!(config.capability && config.capability.tileSets)) {
+            var tileSize = layer.options.tileSize;
+            if (tileSize) {
+                config.tileSize = [tileSize.w, tileSize.h];
+            }
+            config.tileOrigin = layer.options.tileOrigin;
+            config.resolutions = layer.options.resolutions;
+        }
         return Ext.applyIf(config, {
             // the "tiled" property is already used to indicate singleTile
             // the "cached" property will indicate whether to send the TILED param

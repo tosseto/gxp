@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2008-2011 The Open Planning Project
- * 
+ *
  * Published under the GPL license.
  * See https://github.com/opengeo/gxp/raw/master/license.txt for the full text
  * of the license.
@@ -38,18 +38,18 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
      *  Text for add server button (i18n).
      */
     addServerText: "Add Server",
-     /** api: config[wmsText]
+    /** api: config[wmsText]
      *  ``String``
      *  Text for WMS radio-button(i18n).
      */
     addWMSText: "WMS",
 
-     /** api: config[arcText]
+    /** api: config[arcText]
      *  ``String``
      *  Text for ArcGIS REST radio-button(i18n).
      */
     addArcText: "ArcGIS REST",
-    
+
     /** api: config[invalidURLText]
      *  ``String``
      *  Message to display when an invalid URL is entered (i18n).
@@ -100,12 +100,12 @@ gxp.NewSourceWindow = Ext.extend(Ext.Window, {
         });
 
         this.sourceTypeRadioList = new Ext.form.RadioGroup({
-                fieldLabel: 'Type',
-                columns: [50, 190],
-                items: [
-                    {name: 'source_type', inputValue: 'gxp_wmscsource', boxLabel: this.addWMSText, checked: true},
-                    {name: 'source_type', inputValue: 'gxp_arcrestsource', boxLabel: this.addArcText}
-                ]
+            fieldLabel: 'Type',
+            columns: [50, 190],
+            items: [
+                {name: 'source_type', inputValue: 'gxp_wmscsource', boxLabel: this.addWMSText, checked: true},
+                {name: 'source_type', inputValue: 'gxp_arcrestsource', boxLabel: this.addArcText}
+            ]
         });
 
         this.form = new Ext.form.FormPanel({

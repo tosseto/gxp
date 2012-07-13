@@ -1,3 +1,34 @@
+.gxp-layerproperties-label {
+    line-height: 21px;
+}
+.gxp-annotations-tip {
+    white-space: normal !important;
+}
+
+.gxp-symbolgrid-swatch {
+    width: 50%;
+    margin: 0px auto;
+}
+.gxp-symbolgrid .x-treegrid-col {
+    border: none;
+}
+.x-tree-node .gxp-icon-symbolgrid-none {
+    background-image: none;
+    display: none;
+}
+.x-tree-node .gxp-icon-symbolgrid-point {
+    background-image: url(img/silk/bullet_orange.png);
+}
+.x-tree-node .gxp-icon-symbolgrid-line {
+    background-image: url(img/geosilk/line_orange.png);
+}
+.x-tree-node .gxp-icon-symbolgrid-polygon {
+    background-image: url(img/geosilk/shape_square_orange.png);
+}
+.x-tree-node .gxp-icon-symbolgrid-text {
+    background-image: url(img/silk/font.png);
+}
+
 .x-tree-node-leaf  .gx-tree-layer-icon {
     background-image: url(img/geosilk/vector.png);
 }
@@ -194,6 +225,11 @@
     background-image: url(img/geosilk/pan.png);
 }
 
+/* gxp_mapproperties */
+.x-btn .gxp-icon-mapproperties, .x-menu-item .gxp-icon-mapproperties, .x-tree-node .gxp-icon-mapproperties {
+    background-image: url(img/geosilk/map_wrench.png);
+}
+
 /* gxp_layerproperties */
 .x-btn .gxp-icon-layerproperties, .x-menu-item .gxp-icon-layerproperties, .x-tree-node .gxp-icon-layerproperties {
     background-image: url(img/silk/wrench.png);
@@ -267,7 +303,7 @@
 }
 
 /* gxp_layeruploadpanel */
-.x-btn .gxp-icon-filebrowse { 
+.x-btn .gxp-icon-filebrowse, .x-menu-item .gxp-icon-filebrowse { 
     background-image: url(img/silk/folder.png);
 }
 
@@ -355,7 +391,7 @@ div.olMap div.gx-overlay-playback {
 .gxp-layermanager-tree input[checked] + .x-tree-node-anchor {
     font-weight: bold;
 }
-.gxp-layermanager-tree .legend img {
+.gxp-layermanager-tree .legend img, .gxp-layermanager-tree .legend .x-panel {
     padding-left: 48px;
 }
 .gxp-layermanager-tree .legendnode {
@@ -377,7 +413,46 @@ div.olMap div.gx-overlay-playback {
     display: none;
 }
 
+/* gxp_crumbpanel */
+.gxp-crumbpanel-header ul, li.gxp-crumb {
+    position: relative;
+}
+.gxp-crumb .x-tab-left {
+    padding-right: 19px;
+}
+.gxp-crumb-separator {
+    background-repeat: no-repeat;
+    display: block;
+    width: 12px;
+    height: 11px;
+    position: absolute;
+    top: -1px;
+    right: 1px;
+    z-index: 2;
+    font-size: 18px;
+}
+.gxp-crumb .x-tab-right {
+    padding-left: 0px;
+    background-image: none;
+}
+.gxp-crumb .x-tab-left, .gxp-crumb .x-tab-strip-inner {
+    background-image: none;
+}
+.gxp-crumb .x-tab-strip-text {
+    margin: 0 2px 0 2px;
+}
+.x-tab-strip-active .gxp-crumb-separator {
+    display: none;
+}
+.gxp-crumbpanel-header ul {
+    padding-bottom: 1px;
+    border-bottom: 0;
+}
+.gxp-crumbpanel-header {
+    padding-bottom: 0;
+}
 
+/** gx_playbacktoolbar**/
 .x-btn .gxp-icon-reset{
     background-image:url('img/silk/control_start_blue.png')
 }
@@ -385,7 +460,7 @@ div.olMap div.gx-overlay-playback {
     background-image:url('img/silk/control_equalizer_blue.png')
 }
 .x-btn .gxp-icon-next{
-    background-image:url('img/silk/next.png')
+    background-image:url('img/silk/control_end_blue.png')
 }
 .x-btn .gxp-icon-last{
     background-image:url('img/silk/control_end_blue.png')
@@ -432,19 +507,24 @@ div.olMap div.gx-overlay-playback {
 .x-btn-over .gxp-icon-ffwd,.x-item-disabled .gxp-icon-ffwd{
     background-image:url('img/silk/control_fastforward.png')
 }
-.x-slider-min-thumb{
-    background-image:url('img/silk/resultset_next.png')!important;
-    background-position:0 0 !important;
+
+.gx_timeslider div.x-slider-thumb{
+    background-position:0;
+    cursor: pointer;
 }
-.x-slider-max-thumb{
-    background-image:url('img/silk/resultset_previous.png')!important;
-    background-position:0 0 !important;
+.gx_timeslider div.x-slider-min-thumb{
+    background-image:url('img/silk/resultset_next.png');
 }
-.x-slider-horz .x-slider-tail-thumb{
-    background-image:url('img/silk/stop.png')!important;
-    background-position:0 0 !important;
+.gx_timeslider div.x-slider-max-thumb{
+    background-image:url('img/silk/resultset_previous.png');
+}
+.gx_timeslider div.x-slider-tail-thumb{
+    background-image:url('img/silk/stop.png');
     left:-14px;
 }
+
+
+
 .thumb-mapbox {
     width: 128px;
     height: 128px;

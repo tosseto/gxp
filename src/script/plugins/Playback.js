@@ -32,6 +32,18 @@ gxp.plugins.Playback = Ext.extend(gxp.plugins.Tool, {
     /** api: ptype = gxp_playback */
     ptype: "gxp_playback",
     
+    /** api: config[autoStart]
+     *  ``Boolean``
+     *  Should playback begin as soon as possible.
+     */
+    autoStart: false,
+
+    /** api: config[looped]
+     *  ``Boolean``
+     *  Should playback start in continuous loop mode.
+     */    
+    looped: false,
+    
     /** api: config[menuText]
      *  ``String``
      *  Text for Playback menu item (i18n).
@@ -67,13 +79,17 @@ gxp.plugins.Playback = Ext.extend(gxp.plugins.Tool, {
      */
     addOutput: function(config){
         delete this._ready;
+        OpenLayers.Control.TimeManager.prototype.maxFrameDelay = 
+            (this.target.tests && this.target.tests.dropFrames) ? 10 : NaN;
         config = Ext.applyIf(config || this.outputConfig || {}, {
             xtype: 'gxp_playbacktoolbar',
             mapPanel:this.target.mapPanel,
             playbackMode:this.playbackMode,
+            looped:this.looped,
+            autoPlay:this.autoStart,
             optionsWindow: new Ext.Window({
                 title: gxp.PlaybackOptionsPanel.prototype.titleText,
-                width: 300,
+                width: 350,
                 height: 425,
                 layout: 'fit',
                 items: [{xtype: 'gxp_playbackoptions'}],
@@ -168,7 +184,8 @@ gxp.plugins.Playback = Ext.extend(gxp.plugins.Tool, {
                         };
                         for(var j = 0; j < agents[i].layers.length; j++) {
                             var layerRec = app.mapPanel.layers.getByLayer(agents[i].layers[j]);
-                            agentConfig.layers.push(layerRec.jsonData);
+                            var layerConfig = this.target.layerSources[layerRec.get('source')].getConfigForRecord(layerRec);
+                            agentConfig.layers.push(layerConfig);
                         }
                         agentConfigs.push(agentConfig);
                     }

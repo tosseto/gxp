@@ -58,7 +58,7 @@ gxp.plugins.LayerProperties = Ext.extend(gxp.plugins.Tool, {
         
         if (!this.outputConfig) {
             this.outputConfig = {
-                width: 265,
+                width: 325,
                 autoHeight: true
             };
         }
@@ -94,6 +94,7 @@ gxp.plugins.LayerProperties = Ext.extend(gxp.plugins.Tool, {
         var origCfg = this.initialConfig.outputConfig || {};
         this.outputConfig.title = origCfg.title ||
             this.menuText + ": " + record.get("title");
+        this.outputConfig.shortTitle = record.get("title");
         
         //TODO create generic gxp_layerpanel
         var xtype = record.get("properties") || "gxp_layerpanel";
